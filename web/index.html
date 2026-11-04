@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字生命 · 初级原型 L1</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/theme-light.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%2338e8ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ff5fa2'/%3E%3C/svg%3E">
+
+<style id="light-hardening">
+/* 单一浅色主题：强制对比度，避免半覆盖 */
+html,body{background:#f2f3f1!important;color:#111!important}
+body::before,#bg-canvas-wrap,.grain{display:none!important}
+body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradient(90deg,#e6e8e5 1px,transparent 1px)!important;background-size:28px 28px!important}
+#btn-theme{display:none!important}
+.topbar{background:rgba(255,255,255,.96)!important;border-bottom:1px solid #cfd4cf!important}
+.topbar .step,.brand-text em{color:#7c857f!important}
+.topbar .step.active,.brand-text,.brand-text em{color:#111!important}
+#app,.admin-detail,.admin-list{color:#111!important}
+.chart-card,.admin-totals div,.mind-card,.card,.intake-panel{background:#fff!important;border-color:#d2d7d2!important;color:#111!important}
+.admin-item{background:transparent!important;border:0!important;border-bottom:1px solid #e0e4e0!important;border-radius:0!important;color:#111!important;box-shadow:none!important}
+.admin-item.on{border-bottom:1px solid #111!important}
+.admin-item h4,.admin-item .sub,.admin-item em,.chart-head h4,.chart-head em,.admin-mind-head h3,.admin-mind-head span,.admin-totals b,.admin-totals span,.ad-row .txt,.ad-row em,.chart-foot,.starmap-detail,.starmap-bar .days{color:#111!important}
+.admin-item .sub,.chart-head em,.ad-row em,.chart-foot,.admin-totals span{color:#5d665f!important}
+.admin-item.on{border-color:#111!important;box-shadow:0 0 0 1px #111 inset!important}
+.admin-item .mini i{background:#e6e8e5!important}
+.admin-item .mini i span{background:#111!important}
+#admin-curve,#admin-hist,#admin-mood,#admin-starmap{background:#0b0e10!important;border:1px solid #111!important;border-radius:2px!important}
+.admin-charts{grid-template-columns:1fr 1fr!important}
+.chart-card.span2{grid-column:1/-1!important}
+#radar-canvas,#wave-canvas,#spectrum-canvas,#helix-canvas,#mood-canvas{background:#0b0e10!important;border-radius:2px!important}
+.mind-item,.starmap-wrap,.starmap-detail{background:#fff!important;border-color:#d2d7d2!important;color:#111!important}
+.mind-item .txt{color:#111!important}
+.mind-item .bar{background:#e6e8e5!important}.mind-item .bar i{background:#111!important}
+.msg.ai .bubble{background:#fff!important;border-color:#d2d7d2!important;color:#111!important}
+.msg.user .bubble{background:#111!important;color:#fff!important}
+.chat-side{background:#fafbf9!important}.chat-main{background:#fff!important}
+.chat-who h3,.scene-text,.scene-name{color:#111!important}
+.chat-honesty,.chat-subtitle,.msg .meta,.msg .foot{color:#5d665f!important}
+.scene-bg{background:radial-gradient(60% 60% at 50% 38%,#fff 0%,#eef0ed 55%,#dfe3df 100%)!important}
+.scene-ui{background:#fff!important;border:1px solid #111!important;box-shadow:8px 8px 0 rgba(16,19,18,.06)!important}
+.scene-text,.scene-name,.scene-form input{color:#111!important}
+.scene .scene-exit{background:#fff!important;color:#111!important;border-color:#111!important}
+</style>
+<link rel="stylesheet" href="/clean.css">
+</head>
+<body data-theme="light">
+<div id="bg-canvas-wrap"><canvas id="bg-canvas"></canvas></div>
+<div class="grain"></div>
+
+<header class="topbar">
+  <div class="brand" id="brand">
+    <span class="brand-mark"><span></span></span>
+    <span class="brand-text">数字生命<em>DIGITAL LIFE · L1</em></span>
+  </div>
+  <div class="steps" id="steps">
+    <div class="step" data-step="0"><i>01</i><b>连接</b></div>
+    <div class="step" data-step="1"><i>02</i><b>录入</b></div>
+    <div class="step" data-step="2"><i>03</i><b>融合</b></div>
+    <div class="step" data-step="3"><i>04</i><b>档案</b></div>
+  </div>
+  <div class="top-actions">
+    <button class="ghost-btn" id="btn-library">档案库</button>
+    <button class="ghost-btn" id="btn-admin">后台</button>
+    <button class="ghost-btn" id="btn-theme">暗色</button>
+    <button class="ghost-btn danger" id="btn-reset">重新开始</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ 0. WELCOME ============ -->
+  <section class="view active" id="view-welcome">
+    <div class="welcome-hero">
+      <div class="hero-tag">DIGITAL LIFE · LEVEL 1 · 双通道录入</div>
+      <h1>脑波 + 基因<br><span class="serif">→ 数字生命档案</span></h1>
+      <p class="hero-sub">读取脑电与基因，生成可查看、可对话、可导出的数字生命档案。它是数据的投影，不是意识复制。</p>
+      <div class="hero-cta">
+        <button class="primary-btn big" id="btn-start">
+          <span>开始录入</span><i class="arrow">→</i>
+        </button>
+        <button class="link-btn" id="btn-how">它是怎么工作的？</button>
+      </div>
+      <div class="hero-note">支持 CSV / EDF 脑电、FASTA / VCF 基因；所有计算在本机完成。</div>
+    </div>
+
+    <div class="hero-lanes">
+      <div class="lane-card" id="lane-eeg">
+        <div class="lane-icon">
+          <canvas class="mini-wave" width="220" height="64"></canvas>
+        </div>
+        <div class="lane-body">
+          <h3>脑波通道 <span>EEG</span></h3>
+          <p>频谱、复杂度、半球不对称与伪迹。提取 7 个认知维度。</p>
+          <div class="lane-meta">CSV · EDF · JSON · NPZ · WAV</div>
+        </div>
+      </div>
+      <div class="lane-link"><span></span><em>融合</em><span></span></div>
+      <div class="lane-card" id="lane-dna">
+        <div class="lane-icon">
+          <canvas class="mini-helix" width="220" height="64"></canvas>
+        </div>
+        <div class="lane-body">
+          <h3>基因通道 <span>DNA</span></h3>
+          <p>20 个真实参考位点，GC 与 ORF 统计。读取身体倾向。</p>
+          <div class="lane-meta">FASTA · 23andMe · VCF · JSON</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="honesty">
+      <div class="honesty-mark">!</div>
+      <div>
+        <b>先说清楚：这不是意识上传。</b>
+        <p>
+          人类意识无法被复制，脑电只携带宏观节律，基因只携带序列。数字生命的真实能力是：
+          把这两类信号做真实的测量与统计，再用一套可解释的规则合成人格。
+          所以你看到的"它"，是一份被认真写出来的<span class="em">投影</span>，不是被搬运的灵魂。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 1. INTAKE ============ -->
+  <section class="view" id="view-intake">
+    <div class="view-head">
+      <div>
+        <div class="eyebrow">STAGE 02 · 录入</div>
+        <h2>两条通道，缺一不可。</h2>
+        <p>脑波决定"怎么想"，基因决定"从哪儿出发"。上传文件，或选择一份内置样本。</p>
+      </div>
+      <div class="subject-field">
+        <label for="subject">给这次录入一个称呼（可选）</label>
+        <input id="subject" maxlength="24" placeholder="例如：2026 年秋的我">
+      </div>
+    </div>
+
+    <div class="intake-grid">
+      <!-- EEG -->
+      <div class="intake-panel" id="panel-eeg">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="dot cyan"></span>
+            <h3>脑电波</h3>
+            <span class="panel-sub">BRAINWAVES</span>
+          </div>
+          <div class="panel-status" id="eeg-status">未连接</div>
+        </div>
+        <div class="dropzone" id="drop-eeg" tabindex="0" role="button" aria-label="上传脑电文件">
+          <div class="dz-inner">
+            <svg viewBox="0 0 48 48" class="dz-icon"><path d="M6 26h7l4-12 6 24 4-14 3 6h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <b>拖入脑电文件</b>
+            <span>或点击选择 · CSV / TSV / TXT / JSON / EDF / NPZ</span>
+          </div>
+          <input type="file" id="file-eeg" accept=".csv,.tsv,.txt,.json,.edf,.npz,.wav" hidden>
+        </div>
+        <div class="current-file" id="eeg-file" hidden>
+          <span class="file-ico">EEG</span>
+          <div><b></b><small></small></div>
+          <button class="x-btn" data-clear="eeg" aria-label="移除">×</button>
+        </div>
+        <div class="sample-row">
+          <div class="sample-label">内置样本</div>
+          <div class="chips" id="eeg-samples"></div>
+        </div>
+        <div class="hint">
+          <b>格式提示</b>
+          第一行表头，第一列时间（可选），其后每列一个导联；时间列存在时自动推算采样率，否则按 256 Hz 处理。
+        </div>
+      </div>
+
+      <!-- DNA -->
+      <div class="intake-panel" id="panel-dna">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="dot pink"></span>
+            <h3>基因样本</h3>
+            <span class="panel-sub">GENOME</span>
+          </div>
+          <div class="panel-status" id="dna-status">未连接</div>
+        </div>
+        <div class="dropzone" id="drop-dna" tabindex="0" role="button" aria-label="上传基因文件">
+          <div class="dz-inner">
+            <svg viewBox="0 0 48 48" class="dz-icon"><path d="M16 5c0 10 16 10 16 19S16 33 16 43M32 5c0 10-16 10-16 19s16 9 16 19M13 14h22M13 24h22M13 34h22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <b>拖入基因文件</b>
+            <span>或点击选择 · FASTA / 23andMe / VCF / JSON</span>
+          </div>
+          <input type="file" id="file-dna" accept=".fasta,.fa,.txt,.vcf,.json,.csv,.tsv" hidden>
+        </div>
+        <div class="current-file" id="dna-file" hidden>
+          <span class="file-ico pink">DNA</span>
+          <div><b></b><small></small></div>
+          <button class="x-btn" data-clear="dna" aria-label="移除">×</button>
+        </div>
+        <div class="sample-row">
+          <div class="sample-label">内置样本</div>
+          <div class="chips" id="dna-samples"></div>
+        </div>
+        <div class="hint">
+          <b>隐私</b>
+          所有计算都在本机完成。原始序列不会上传到任何服务器；保存的档案只含统计特征与 480 bp 的可视化窗口。
+        </div>
+      </div>
+    </div>
+
+    <div class="intake-panel face-panel" id="panel-face">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span class="dot amber"></span>
+          <h3>面孔</h3>
+          <span class="panel-sub">FACE · 可选</span>
+        </div>
+        <div class="panel-status" id="face-status">未录入</div>
+      </div>
+      <div class="face-body">
+        <div class="face-preview" id="face-preview">
+          <div class="face-empty" id="face-empty">
+            <div class="face-empty-oval"></div>
+            <span>还没有面孔</span>
+            <small>用摄像头录入，或上传一张正面照片</small>
+          </div>
+          <canvas id="face-preview-canvas" hidden></canvas>
+          <div class="face-badge" id="face-badge" hidden></div>
+        </div>
+        <div class="face-controls">
+          <div class="face-buttons">
+            <button class="primary-btn sm" id="btn-camera"><span>摄像头录入</span><i class="arrow">◎</i></button>
+            <button class="ghost-btn" id="btn-face-upload">上传照片</button>
+            <button class="ghost-btn" id="btn-sprite">导入立绘</button>
+            <input type="file" id="file-sprite" accept="image/png,image/webp,image/jpeg" hidden>
+            <input type="file" id="file-face" accept="image/png,image/jpeg,image/webp" hidden>
+            <button class="link-btn" id="btn-face-clear" hidden>移除面孔</button>
+          </div>
+          <p class="face-hint">
+            引导拍摄五个角度：<b>正面 · 左转 · 右转 · 抬头 · 微笑</b>。
+            会用来做头部转动、眨眼与说话口型；<b>不是三维扫描</b>，也不生成新的人脸。
+          </p>
+          <div class="voice-rec">
+            <div class="voice-head"><b>声音样本</b><span id="voice-status">未录制</span></div>
+            <div class="voice-row">
+              <button class="ghost-btn sm" id="btn-record"><span class="rec-dot"></span> 录 3 秒</button>
+              <button class="ghost-btn sm" id="btn-voice-settings">音色</button>
+              <audio id="voice-audio" controls hidden></audio>
+              <button class="link-btn" id="btn-voice-clear" hidden>删除</button>
+            </div>
+            <div class="voice-metrics" id="voice-metrics"></div>
+            <p class="face-hint">只测量基频、音色与能量，用来微调她/他的声音。<b>浏览器无法克隆音色</b>，所以这是"声线拟合"，不是模仿。</p>
+          </div>
+          <div class="face-views" id="face-views"></div>
+          <div class="face-privacy">照片只写进本机档案（<code>.mind</code>），删档案即删照片。摄像头画面不上传。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intake-foot">
+      <div class="voice-picker">
+        <span class="sample-label">它说话的方式</span>
+        <div class="chips" id="voice-chips"></div>
+      </div>
+      <div class="intake-actions">
+        <div class="ready-hint" id="ready-hint">等待两条通道接入</div>
+        <button class="primary-btn" id="btn-scan" disabled>
+          <span>开始融合</span><i class="arrow">→</i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. SCAN ============ -->
+  <section class="view" id="view-scan">
+    <div class="scan-head">
+      <div class="eyebrow">STAGE 03 · 融合</div>
+      <h2>正在把一个夜晚，压缩成一个人。</h2>
+      <p id="scan-sub">这是真实的计算，也是不真实的翻译。</p>
+    </div>
+
+    <div class="scan-stage">
+      <canvas id="scan-canvas"></canvas>
+      <div class="scan-ring r1"></div>
+      <div class="scan-ring r2"></div>
+      <div class="scan-ring r3"></div>
+      <div class="scan-core">
+        <div class="scan-pct" id="scan-pct">0<small>%</small></div>
+        <div class="scan-core-label" id="scan-core-label">初始化</div>
+      </div>
+    </div>
+
+    <div class="tracks">
+      <div class="track" id="track-eeg">
+        <div class="track-head"><span class="dot cyan"></span><b>脑波通道</b><em>EEG</em><span class="track-pct">0%</span></div>
+        <div class="track-bar"><i></i></div>
+        <ul class="track-log"></ul>
+      </div>
+      <div class="track" id="track-dna">
+        <div class="track-head"><span class="dot pink"></span><b>基因通道</b><em>DNA</em><span class="track-pct">0%</span></div>
+        <div class="track-bar"><i></i></div>
+        <ul class="track-log"></ul>
+      </div>
+      <div class="track" id="track-core">
+        <div class="track-head"><span class="dot violet"></span><b>合成通道</b><em>FUSION</em><span class="track-pct">0%</span></div>
+        <div class="track-bar"><i></i></div>
+        <ul class="track-log"></ul>
+      </div>
+    </div>
+
+    <div class="scan-foot">
+      <div class="scan-quote" id="scan-quote">「把一个人读成数据，是一种冒犯；把数据读成一个人，是一种温柔。」</div>
+      <button class="ghost-btn" id="btn-cancel-scan">中止</button>
+    </div>
+    <div class="scan-error" id="scan-error" hidden></div>
+  </section>
+
+  <!-- ============ 3. DOSSIER ============ -->
+  <section class="view" id="view-dossier">
+    <div class="dossier-top">
+      <div class="dossier-id">
+        <div class="eyebrow">STAGE 04 · 档案</div>
+        <div class="id-row"><span class="mono" id="d-id">MIND_000000</span><span class="tag" id="d-created"></span></div>
+      </div>
+      <div class="dossier-actions">
+        <button class="ghost-btn" id="btn-scene">游戏模式</button>
+        <button class="ghost-btn" id="btn-save">保存副本</button>
+        <button class="ghost-btn" id="btn-card">生命卡</button>
+        <button class="ghost-btn" id="btn-archive">记忆档案</button>
+        <button class="ghost-btn" id="btn-md">导出 Markdown</button>
+        <button class="ghost-btn" id="btn-json">导出 .mind</button>
+        <button class="primary-btn sm" id="btn-talk">开始对话 <i class="arrow">→</i></button>
+      </div>
+    </div>
+
+    <div class="dossier-hero">
+      <div class="orb-wrap" id="hero-visual">
+        <canvas id="orb-canvas"></canvas>
+        <canvas id="avatar-canvas" hidden></canvas>
+        <div class="orb-glow"></div>
+      </div>
+      <div class="dossier-name">
+        <div class="name-line">
+          <h1 id="d-name">—</h1>
+        </div>
+        <div class="title-line" id="d-title">—</div>
+        <blockquote class="summary" id="d-summary">—</blockquote>
+        <div class="chips-line" id="d-chips"></div>
+        <div class="origin-line" id="d-origin"></div>
+      </div>
+    </div>
+
+    <div class="dossier-grid">
+      <div class="card traits-card">
+        <div class="card-head"><h3>七维剖面</h3><span class="card-sub">EEG × DNA 融合</span></div>
+        <div class="traits-body">
+          <canvas id="radar-canvas"></canvas>
+          <div class="trait-list" id="trait-list"></div>
+        </div>
+        <div class="card-foot" id="fusion-foot"></div>
+      </div>
+
+      <div class="card signal-card">
+        <div class="card-head"><h3>脑波地形</h3><span class="card-sub" id="signal-sub">EEG</span></div>
+        <canvas id="wave-canvas"></canvas>
+        <div class="band-legend" id="band-legend"></div>
+        <div class="spectrum-strip"><canvas id="spectrum-canvas"></canvas></div>
+        <div class="signal-stats" id="signal-stats"></div>
+      </div>
+
+      <div class="card dna-card">
+        <div class="card-head"><h3>基因记录</h3><span class="card-sub" id="dna-sub">DNA</span></div>
+        <canvas id="helix-canvas"></canvas>
+        <div class="insight-list" id="insight-list"></div>
+        <div class="card-foot" id="dna-foot"></div>
+      </div>
+
+      <div class="card face-card" id="face-card" hidden>
+        <div class="card-head"><h3>面孔记录</h3><span class="card-sub">FACE</span></div>
+        <div class="face-shots" id="face-shots"></div>
+        <div class="face-metrics" id="face-metrics"></div>
+        <div class="card-foot" id="face-foot"></div>
+      </div>
+
+      <div class="card starmap-card" id="starmap-card">
+        <div class="card-head"><h3>记忆星图</h3><span class="card-sub">MEMORY MAP · 脑区隐喻</span></div>
+        <div class="starmap-wrap"><canvas id="starmap-canvas"></canvas></div>
+        <div class="starmap-legend" id="starmap-legend"></div>
+        <div class="starmap-bar">
+          <label class="days">时间
+            <input type="range" id="starmap-days" min="0" max="60" value="0" step="1">
+            <em id="starmap-days-label">今天</em>
+          </label>
+          <div class="comp" id="comp-bar"></div>
+        </div>
+        <div class="starmap-detail" id="starmap-detail">点一个节点，看看它现在有多清晰。</div>
+        <div class="card-foot">结构性记忆（脑波 / 基因 / 面孔 / 声音）不随时间衰减；情景记忆按艾宾浩斯曲线变淡。脑区只是隐喻，不是解剖定位。</div>
+      </div>
+
+      <div class="card mind-list-card">
+        <div class="card-head"><h3>情景记忆</h3><span class="card-sub" id="mind-count">0 条</span></div>
+        <canvas id="mood-canvas"></canvas>
+        <div class="mind-list" id="mind-list"></div>
+        <div class="card-foot" id="mind-foot"></div>
+      </div>
+
+      <div class="card world-card" id="world-card">
+        <div class="card-head"><h3>世界状态</h3><span class="card-sub">COMPUTE</span></div>
+        <div class="world-meter"><i id="wc-fill"></i></div>
+        <div class="world-row"><b id="wc-label">稳定</b><span id="wc-desc">世界完整，细节清晰。</span></div>
+        <div class="world-env" id="wc-env">环境：亮度正常。</div>
+        <div class="card-foot" id="wc-foot"></div>
+      </div>
+
+      <div class="card inner-card" id="inner-card">
+        <div class="card-head"><h3>内在状态</h3><span class="card-sub">AGENCY · 模拟自主性</span></div>
+        <div class="drives" id="dossier-drives"></div>
+        <div class="intent" id="dossier-intent"></div>
+        <div class="thoughts" id="dossier-thoughts"></div>
+        <div class="card-foot">驱动会随时间累积，对话会消耗它们；想说话时，它会先形成一个小意图。这是规则与计时器，不是意识。</div>
+      </div>
+
+      <div class="card timeline-card">
+        <div class="card-head"><h3>录入轨迹</h3><span class="card-sub">TRACE</span></div>
+        <ul class="timeline" id="timeline"></ul>
+      </div>
+
+      <div class="card memory-card">
+        <div class="card-head"><h3>记忆碎片</h3><span class="card-sub">FRAGMENTS</span></div>
+        <div class="memories" id="memories"></div>
+      </div>
+
+      <div class="card shadow-card">
+        <div class="card-head"><h3>质量与缺口</h3><span class="card-sub">QUALITY</span></div>
+        <div id="shadow-body"></div>
+      </div>
+    </div>
+
+    <div class="dossier-bottom">
+      <div class="dossier-quote serif" id="d-limits"></div>
+      <div class="disclaimer-inline">
+        本档案是数据的投影，不是意识。它不是医学、遗传或心理诊断，也不预测任何疾病。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. CHAT ============ -->
+  <section class="view" id="view-chat">
+    <div class="chat-shell">
+      <aside class="chat-side">
+        <div class="chat-face">
+          <canvas id="chat-avatar-canvas"></canvas>
+          <canvas id="chat-orb-canvas" hidden></canvas>
+        </div>
+        <div class="chat-subtitle" id="chat-subtitle"></div>
+        <div class="chat-who">
+          <h3 id="c-name">—</h3>
+          <span id="c-title">—</span>
+        </div>
+        <div class="chat-emotion">
+          <div class="emo-row"><span>唤醒度</span><div class="emo-bar"><i id="emo-arousal"></i></div></div>
+          <div class="emo-row"><span>愉悦度</span><div class="emo-bar"><i id="emo-valence"></i></div></div>
+          <div class="emo-label" id="emo-label">平静 · 中性</div>
+        </div>
+        <div class="chat-rel">
+          <div class="rel-track"><i id="rel-fill"></i></div>
+          <span id="rel-label">初次接通</span>
+        </div>
+        <div class="chat-memory">
+          <span id="mem-count">记忆 0</span>
+          <span id="mem-last">—</span>
+        </div>
+        <div class="world-line" id="world-line"><span>算力 · 世界稳定</span><div class="bar"><i id="world-fill" style="width:100%"></i></div><em id="world-label">稳定</em></div>
+        <div class="inner-box">
+          <div class="inner-head">
+            <span>内心</span>
+            <select id="autonomy" aria-label="自主性">
+              <option value="quiet">安静</option>
+              <option value="balanced" selected>平衡</option>
+              <option value="active">主动</option>
+            </select>
+          </div>
+          <div class="drives" id="drives"></div>
+          <div class="intent" id="inner-intent">还没有想做的事。</div>
+          <div class="thought" id="inner-thought"></div>
+        </div>
+        <div class="chat-voice">
+          <label class="switch"><input type="checkbox" id="auto-speak" checked><i></i><span>自动朗读</span></label>
+          <select id="voice-gender" aria-label="音色">
+            <option value="female">女声</option>
+            <option value="male">男声</option>
+          </select>
+        </div>
+        <div class="chat-side-actions">
+          <button class="ghost-btn sm" id="btn-back-dossier">← 返回档案</button>
+          <button class="ghost-btn sm" id="btn-playaudio">播放音景</button>
+          <button class="ghost-btn sm" id="btn-stop-speak" hidden>停止朗读</button>
+        </div>
+        <div class="chat-honesty">它会回应你，但它没有意识。所有回答来自规则与模板。</div>
+      </aside>
+
+      <div class="chat-main">
+        <div class="chat-stream" id="chat-stream"></div>
+        <div class="suggestions" id="chat-suggestions"></div>
+        <button class="nudge" id="nudge" hidden>她好像想说点什么 · 点此听</button>
+        <form class="chat-compose" id="chat-form">
+          <button class="ghost-btn mic-btn" id="btn-mic" type="button" title="语音输入（可能由浏览器调用云端识别）">语音</button>
+          <textarea id="chat-input" rows="1" placeholder="对它说点什么……（Enter 发送，Shift+Enter 换行）" maxlength="600"></textarea>
+          <button class="primary-btn sm" type="submit" id="btn-send">发送</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. LIBRARY ============ -->
+  <section class="view" id="view-library">
+    <div class="view-head">
+      <div>
+        <div class="eyebrow">ARCHIVE · 档案库</div>
+        <h2>你留下过的人。</h2>
+        <p>已保存的数字生命。可以重开对话、对比两个副本，或删除。</p>
+      </div>
+      <div class="lib-tools">
+        <button class="ghost-btn" id="btn-compare-mode">选择对比</button>
+        <button class="ghost-btn" id="btn-lib-close">返回</button>
+      </div>
+    </div>
+    <div class="library-grid" id="library-grid"></div>
+    <div class="empty-state" id="library-empty" hidden>
+      <div class="empty-orb"></div>
+      <p>还没有档案。完成一次录入，它就会出现在这里。</p>
+    </div>
+    <div class="compare-tray" id="compare-tray" hidden>
+      <span id="compare-selected">已选 0 / 2</span>
+      <button class="primary-btn sm" id="btn-do-compare" disabled>生成共鸣报告</button>
+      <button class="link-btn" id="btn-clear-compare">清空</button>
+    </div>
+  </section>
+
+  <!-- ============ 6. COMPARE ============ -->
+  <section class="view" id="view-compare">
+    <div class="view-head">
+      <div>
+        <div class="eyebrow">RESONANCE · 共鸣</div>
+        <h2 id="cmp-title">两个副本的共振</h2>
+        <p id="cmp-line">—</p>
+      </div>
+      <button class="ghost-btn" id="btn-cmp-back">返回档案库</button>
+    </div>
+    <div class="compare-hero">
+      <div class="cmp-orb"><canvas id="cmp-orb-a"></canvas><b id="cmp-name-a">—</b></div>
+      <div class="cmp-center">
+        <div class="cmp-score" id="cmp-score">0<small>%</small></div>
+        <div class="cmp-score-label">共鸣度</div>
+        <div class="cmp-link"><i></i></div>
+      </div>
+      <div class="cmp-orb"><canvas id="cmp-orb-b"></canvas><b id="cmp-name-b">—</b></div>
+    </div>
+    <div class="compare-diffs" id="compare-diffs"></div>
+    <div class="compare-note" id="compare-note"></div>
+  </section>
+
+  <!-- ============ 7. ADMIN ============ -->
+  <section class="view" id="view-admin">
+    <div class="view-head">
+      <div>
+        <div class="eyebrow">CONSOLE · 后台</div>
+        <h2>记忆观测台</h2>
+        <p>每个数字生命的记忆星图、遗忘曲线、留存分布与心情轨迹。只读聚合，不改档案。</p>
+      </div>
+      <div class="lib-tools">
+        <button class="ghost-btn" id="admin-refresh">刷新</button>
+        <button class="ghost-btn" id="admin-close">返回</button>
+      </div>
+    </div>
+    <div class="admin-totals" id="admin-totals"></div>
+    <div class="admin-grid">
+      <aside class="admin-list" id="admin-list"></aside>
+      <div class="admin-detail">
+        <div class="admin-empty" id="admin-empty">选择左侧的一个数字生命。</div>
+        <div id="admin-body" hidden>
+          <header class="admin-hero">
+            <div class="admin-hero-main">
+              <h3 id="ad-name">—</h3>
+              <p id="ad-facts">—</p>
+            </div>
+            <div class="admin-badges" id="ad-badges"></div>
+          </header>
+
+          <section class="admin-main">
+            <div class="chart-head"><h4>遗忘曲线</h4><em id="ad-half">—</em></div>
+            <canvas id="admin-curve"></canvas>
+            <div class="admin-note" id="curve-note">主线：中位记忆的理论衰减。散点：每条真实记忆的位置。</div>
+          </section>
+
+          <section class="admin-main">
+            <div class="chart-head"><h4>记忆星图</h4><em id="ad-days">今天</em></div>
+            <canvas id="admin-starmap"></canvas>
+            <input type="range" id="admin-days-range" min="0" max="60" value="0" step="1">
+          </section>
+
+          <details class="admin-fold">
+            <summary>留存分布</summary>
+            <canvas id="admin-hist"></canvas>
+          </details>
+          <details class="admin-fold">
+            <summary>心情轨迹</summary>
+            <canvas id="admin-mood"></canvas>
+          </details>
+          <details class="admin-fold">
+            <summary>脆弱与牢固</summary>
+            <div id="ad-lists"></div>
+          </details>
+          <details class="admin-fold">
+            <summary>生命进程</summary>
+            <div id="admin-sim" class="admin-sim">—</div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ MODALS ============ -->
+<div class="modal" id="modal-how">
+  <div class="modal-body">
+    <button class="x-btn modal-x" data-close>×</button>
+    <div class="eyebrow">HOW IT WORKS</div>
+    <h2>它做了什么，没做什么。</h2>
+    <div class="how-grid">
+      <div><b>① 真实测量</b><p>对脑电做去趋势、Welch 功率谱、频带功率、样本熵、Hurst、Hjorth、半球不对称与伪迹检测。对基因做 GC、ORF、k-mer 统计，并在 20 个真实 GRCh38 参考上下文里判定位点。</p></div>
+      <div><b>② 可解释投影</b><p>把测量结果投影到七个维度。每个分数都标出来源与权重，脑波约占七成，基因约占三成。没有隐藏的"AI 魔法"。</p></div>
+      <div><b>③ 档案装配</b><p>把七维向量、数据来源、录入轨迹与质量指标装配成一份可保存、可复现的档案。相同输入永远得到同一个编号。</p></div>
+      <div><b>④ 清楚的边界</b><p>脑电不含思想，基因不含记忆。任何称得上"意识复制"的系统都不存在。数字生命是一个诚实的模拟器，不是上传机器。</p></div>
+    </div>
+    <div class="modal-note">如果你在找医学或遗传咨询，请去正规机构。这里的一切都不构成诊断。</div>
+  </div>
+</div>
+
+<div class="modal" id="modal-compare-list">
+  <div class="modal-body wide">
+    <button class="x-btn modal-x" data-close>×</button>
+    <div class="eyebrow">COMPARE</div>
+    <h2>选两个副本，看它们怎么共振。</h2>
+    <div class="pick-grid" id="pick-grid"></div>
+  </div>
+</div>
+
+<div id="scene" class="scene" hidden>
+  <div class="scene-bg"></div>
+  <div class="scene-window"></div>
+  <div class="scene-particles" id="scene-particles"></div>
+  <div class="scene-shade" id="scene-shade"></div>
+  <div class="scene-char-wrap"><img id="scene-char" alt="角色立绘"></div>
+  <div class="scene-ui">
+    <div class="scene-name" id="scene-name">—</div>
+    <div class="scene-text" id="scene-text"></div>
+    <div class="scene-choices" id="scene-choices"></div>
+    <form id="scene-form" class="scene-form">
+      <input id="scene-input" maxlength="300" placeholder="说点什么……" autocomplete="off">
+      <button type="submit">说</button>
+    </form>
+  </div>
+  <button class="scene-exit" id="scene-exit">退出游戏模式</button>
+</div>
+
+<div class="modal" id="modal-voice">
+  <div class="modal-body">
+    <button class="x-btn modal-x" data-close>×</button>
+    <div class="eyebrow">VOICE · 声音</div>
+    <h2>让她说话像个人。</h2>
+    <p style="color:var(--text-2);font-size:12.5px;line-height:1.9">优先使用系统里最自然的中文语音，并按当前心情调整语速与音高。也可以接本地语音模型（fish-speech / GPT-SoVITS 等）——浏览器不能克隆音色，那需要本地模型。</p>
+    <div class="voice-setting">
+      <label>系统音色</label>
+      <select id="tts-voice-list"></select>
+      <button class="ghost-btn sm" id="tts-test">试听</button>
+    </div>
+    <div class="voice-setting col">
+      <label>本地语音服务（可选，POST JSON）</label>
+      <input id="tts-url" placeholder="http://127.0.0.1:9880/tts">
+      <small>请求体：{text, speaker, emotion, speed, pitch}；返回音频二进制。留空则用浏览器语音。</small>
+    </div>
+    <div class="voice-setting">
+      <button class="primary-btn sm" id="tts-save">保存</button>
+      <span id="tts-engine" style="font-size:10px;color:var(--text-3)"></span>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="/avatar.js"></script>
+<script src="/camera.js"></script>
+<script src="/mic.js"></script>
+<script src="/starmap.js"></script>
+<script src="/scene.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
