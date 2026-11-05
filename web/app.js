@@ -2698,3 +2698,24 @@ if (document.readyState === 'loading') {
   lifeBarBoot();
 }
 window.addEventListener('load', lifeBarBoot);
+
+
+/* glyphGuard: an <img> that fails to load shows a broken-image placeholder.
+   Hide it instead, and bring it back only if it later loads something real. */
+function glyphGuard(root) {
+  const imgs = (root || document).querySelectorAll('img');
+  imgs.forEach(function (img) {
+    if (img.dataset.guarded) return;
+    img.dataset.guarded = '1';
+    img.addEventListener('error', function () { img.style.display = 'none'; });
+    img.addEventListener('load', function () {
+      if (img.naturalWidth > 0) img.style.removeProperty('display');
+    });
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
+      img.style.display = 'none';
+    }
+  });
+}
+glyphGuard();
+window.addEventListener('load', function () { glyphGuard(); });
+setInterval(function () { glyphGuard(); }, 4000);
