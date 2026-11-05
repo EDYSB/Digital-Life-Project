@@ -379,6 +379,20 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
         }
     if core_mod.matches(message):
         return core_mod.reply(profile, message)
+    try:
+        from . import llm as llm_mod
+        hit = llm_mod.reply(profile, message, recalled, mood, world)
+        if hit:
+            per0 = profile.get("persona") or {}
+            emo = {"arousal": round(float(mood.get("arousal", 0.5)), 2),
+                   "valence": round(float(mood.get("valence", 0.55)), 2),
+                   "label": mood.get("label") or "平静 · 中性"}
+            return {"text": hit, "intent": "llm", "intent_zh": "模型",
+                    "emotion": emo, "followup": "", "voice": per0.get("voice", "calm"),
+                    "memory": None, "mood": emo, "world": world,
+                    "disclaimer": "由外部模型生成，不是意识。"}
+    except Exception:
+        pass
     voice = profile.get("persona", {}).get("voice", "calm")
     if voice not in REPLIES["greeting"]:
         voice = "neutral"

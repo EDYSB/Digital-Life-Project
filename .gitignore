@@ -2,6 +2,7 @@
 *.pyc
 out/
 minds/
+config.json
 .DS_Store
 Thumbs.db
 raw/edge-profile/

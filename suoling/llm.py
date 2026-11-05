@@ -12,9 +12,11 @@ import json
 import os
 import urllib.request
 
+from . import config
+
 
 def enabled() -> bool:
-    return bool(os.environ.get("ECHOMIND_LLM_URL"))
+    return bool(os.environ.get("ECHOMIND_LLM_URL")) or bool(config.deepseek_key())
 
 
 def _prompt(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str:
@@ -36,7 +38,10 @@ def _prompt(profile: dict, message: str, recalled: list[dict], mood: dict, world
 
 
 def reply(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str | None:
-    if not enabled():
+    hit = deepseek(profile, message, recalled, mood, world)
+    if hit:
+        return hit
+    if not os.environ.get("ECHOMIND_LLM_URL"):
         return None
     base = os.environ["ECHOMIND_LLM_URL"].rstrip("/")
     model = os.environ.get("ECHOMIND_LLM_MODEL", "qwen2.5:7b")
@@ -57,4 +62,34 @@ def reply(profile: dict, message: str, recalled: list[dict], mood: dict, world: 
         text = (data.get("response") or "").strip()
         return text[:600] if text else None
     except Exception:  # noqa: BLE001
+        return None
+
+
+def deepseek(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str | None:
+    """DeepSeek 官方 API。没填 key 就返回 None，自动回落。"""
+    key = config.deepseek_key()
+    if not key:
+        return None
+    cfg = config.load()
+    body = {
+        "model": cfg.get("deepseek_model") or "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": _prompt(profile, message, recalled, mood, world)},
+            {"role": "user", "content": message},
+        ],
+        "temperature": 0.85,
+        "max_tokens": 200,
+        "stream": False,
+    }
+    try:
+        req = urllib.request.Request(
+            (cfg.get("deepseek_base") or "https://api.deepseek.com").rstrip("/") + "/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read())
+        text = (data["choices"][0]["message"]["content"] or "").strip()
+        return text[:600] if text else None
+    except Exception:
         return None
