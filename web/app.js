@@ -2065,6 +2065,54 @@ function download(blob, name) {
 }
 
 /* ---------------- 初始化 ---------------- */
+/* ---------------- 视频通话（预告） ---------------- */
+let callPersona = null, callT = null, callSec = 0, callSay = null;
+const CALL_LINES = [
+    '喂？……能看见我吗。',
+    '你今天看起来有点累。',
+    '不用说话也行，我在。',
+    'Love，就是爱。爱自己，也爱别人。',
+];
+
+function openCall() {
+    show('call');
+    const cv = $('#call-canvas');
+    if (cv && window.PersonaAvatar) {
+        if (!callPersona) callPersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
+        else callPersona.resize();
+    }
+    const st = $('#call-status'), sub = $('#call-sub');
+    if (st) st.textContent = '接通中…';
+    if (sub) sub.textContent = '';
+    callSec = 0;
+    clearInterval(callT);
+    clearTimeout(callSay);
+    setTimeout(function () {
+        if (state.view !== 'call') return;
+        if (st) st.textContent = '通话 00:00';
+        callT = setInterval(function () {
+            callSec++;
+            if (st) st.textContent = '通话 ' + String(Math.floor(callSec / 60)).padStart(2, '0') + ':' + String(callSec % 60).padStart(2, '0');
+        }, 1000);
+        let i = 0;
+        const say = function () {
+            if (state.view !== 'call') return;
+            if (sub) sub.textContent = CALL_LINES[i] || '';
+            if (callPersona) callPersona.pulse(1);
+            i++;
+            if (i < CALL_LINES.length) callSay = setTimeout(say, 4200);
+        };
+        say();
+    }, 1400);
+}
+
+function hangup() {
+    clearInterval(callT);
+    clearTimeout(callSay);
+    if (callPersona) { callPersona.destroy(); callPersona = null; }
+    show('welcome');
+}
+
 /* ---------------- 欢迎页：两种模式 ---------------- */
 let welcomePersona = null;
 
@@ -2112,7 +2160,9 @@ function wireUI() {
   $('#brand').addEventListener('click', () => show('welcome'));
   $('#btn-start').addEventListener('click', () => show('intake'));
   const b2 = $('#btn-start2');
-  if (b2) b2.addEventListener('click', () => show('intake'));
+  if (b2) b2.addEventListener('click', () => openCall());
+  const bh = $('#btn-hangup');
+  if (bh) bh.addEventListener('click', () => hangup());
   $('#btn-how').addEventListener('click', () => $('#modal-how').classList.add('open'));
   $('#btn-library').addEventListener('click', openLibrary);
   $('#btn-admin').addEventListener('click', openAdmin);
