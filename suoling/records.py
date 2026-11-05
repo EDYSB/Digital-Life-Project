@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
+import re
 import sqlite3
 import threading
 
@@ -35,6 +36,16 @@ CREATE TABLE IF NOT EXISTS days (
     PRIMARY KEY (mind_id, day)
 );
 """
+
+# What a day sounds like, depending on how it was.
+OPENERS = {
+    "quiet": "今天很安静。",
+    "busy": "今天说了不少。",
+    "late": "今天拖到很晚。",
+    "usual": "今天和平常差不多。",
+}
+
+_END = "。！？!?…~"
 
 
 def path(root: str | None = None) -> str:
@@ -88,31 +99,58 @@ def days(mind_id: str, limit: int = 14) -> list:
     return [{"day": r[0], "turns": r[1]} for r in rows]
 
 
-def digest(mind_id: str, day: str | None = None) -> str:
-    """Rebuild a day's summary from the ledger."""
+def _tidy(text: str, limit: int = 28) -> str:
+    t = re.sub(r"\s+", " ", (text or "").strip())
+    t = t.rstrip(_END).strip()
+    if len(t) > limit:
+        t = t[:limit] + "…"
+    return t
+
+
+def _shape(rows: list) -> str:
+    """Pick a few real lines and weave them into a paragraph."""
+    mine = [r["text"] for r in rows if r["role"] == "me"]
+    hers = [r["text"] for r in rows if r["role"] == "her"]
+    hours = [int(r["at"][11:13]) for r in rows if len(r["at"]) >= 13]
+
+    n = len(mine)
+    if n == 0:
+        return ""
+    mood = "quiet" if n <= 1 else ("busy" if n >= 8 else "usual")
+    if hours and max(hours) >= 23:
+        mood = "late"
+    parts = [OPENERS[mood]]
+
+    first = _tidy(mine[0])
+    last = _tidy(mine[-1])
+    parts.append("你开头说「%s」。" % first)
+    if n > 1 and last != first:
+        parts.append("后来讲到「%s」。" % last)
+    if hers:
+        parts.append("我跟你说「%s」。" % _tidy(hers[-1]))
+    return "".join(parts)
+
+
+def digest(mind_id: str, day: str | None = None, persist: bool = True) -> str:
+    """Rebuild a day's journal entry from the ledger."""
     day = day or _dt.date.today().isoformat()
     c = _conn()
     rows = c.execute(
-        "SELECT role, text FROM turns WHERE mind_id=? AND substr(at,1,10)=? ORDER BY id",
+        "SELECT at, role, text FROM turns WHERE mind_id=? AND substr(at,1,10)=? ORDER BY id",
         (mind_id, day),
     ).fetchall()
     c.close()
     if not rows:
         return ""
-    mine = [r[1] for r in rows if r[0] == "me"]
-    hers = [r[1] for r in rows if r[0] == "her"]
-    bits = ["%s：说了 %d 句，回了 %d 句。" % (day, len(mine), len(hers))]
-    if mine:
-        bits.append("最开头是「%s」。" % mine[0][:20])
-    if hers:
-        bits.append("我记得我说过「%s」。" % hers[-1][:20])
-    text = "".join(bits)
-    with _LOCK:
-        c = _conn()
-        with c:
-            c.execute(
-                "INSERT OR REPLACE INTO days(mind_id, day, summary) VALUES (?,?,?)",
-                (mind_id, day, text),
-            )
-        c.close()
+    data = [{"at": r[0], "role": r[1], "text": r[2]} for r in rows]
+    text = _shape(data)
+    if persist and text:
+        with _LOCK:
+            c = _conn()
+            with c:
+                c.execute(
+                    "INSERT OR REPLACE INTO days(mind_id, day, summary) VALUES (?,?,?)",
+                    (mind_id, day, text),
+                )
+            c.close()
     return text
