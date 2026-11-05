@@ -3,6 +3,7 @@
   const MODEL = '/live2d/model.model3.json';
 
   async function mount(container, opts) {
+    return null; // Live2D 暂不启用：内核与框架版本不匹配，黑屏
     if (!window.PIXI || !PIXI.live2d) return null;
     const w = container.clientWidth || 300;
     const h = container.clientHeight || 380;

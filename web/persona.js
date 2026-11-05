@@ -20,6 +20,9 @@ class PersonaAvatar {
     this.alive = true;
     this.art = new Image();
     this.art.src = '/assets/whale-girl.png';
+    this.frames = { idle: new Image(), reach: new Image() };
+    this.frames.idle.src = '/assets/df-idle.png';
+    this.frames.reach.src = '/assets/df-reach.png';
     this.resize();
     this._loop = this._loop.bind(this);
     this.raf = requestAnimationFrame(this._loop);
@@ -125,6 +128,20 @@ class PersonaAvatar {
     c.restore();
 
     const breathe = 1 + Math.sin(this.t * 1.2) * 0.008 + this.pulseV * 0.012;
+
+    /* 图片包：待机/伸手两帧，说话时切换；再不行退回单张立绘 */
+    const F = this.frames || {};
+    if (F.idle && F.idle.complete && F.idle.naturalWidth) {
+      const useReach = this.speaking && F.reach && F.reach.complete && F.reach.naturalWidth;
+      const img = useReach ? F.reach : F.idle;
+      const maxH = h * 0.97 * breathe;
+      const sc = Math.min(maxH / img.naturalHeight, (w * 1.18) / img.naturalWidth);
+      const iw = img.naturalWidth * sc, ih = img.naturalHeight * sc;
+      const ax = (w - iw) / 2;
+      const ay = h - ih + Math.sin(this.t * 1.1) * 2;
+      c.drawImage(img, ax, ay, iw, ih);
+      return;
+    }
 
     /* 有立绘就用立绘（呼吸 + 轻微浮动），没有就画代码版 */
     if (this.art && this.art.complete && this.art.naturalWidth) {
