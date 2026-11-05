@@ -280,6 +280,36 @@ def cmd_brain(args) -> None:
     print("")
 
 
+def cmd_life(args) -> None:
+    """One view of everything that makes it feel alive."""
+    from . import life_state, pipeline
+
+    items = pipeline.list_minds()
+    if not items:
+        print("还没有档案。先运行：dl demo")
+        return
+    profile = pipeline.load(args.id) if args.id else pipeline.load(items[0]["id"])
+    d = life_state.summary(profile)
+
+    print("")
+    print("  %s" % ((profile.get("persona") or {}).get("name") or "它"))
+    print("  " + "─" * 44)
+    r = d["rhythm"]
+    print("  作息    %s  清醒度 %.2f" % (r["phase"], r["wakefulness"]))
+    p = d["presence"]
+    print("  在场    %s%s" % (p["state"], ("（%s）" % p["gap"]) if p["gap"] else ""))
+    print("  关系    %s · %s" % (d["stage"]["stage"], d["stage"]["note"]))
+    m = d["mood"]
+    print("  心情    %s  愉悦 %.2f  唤醒 %.2f" % (m.get("label") or "—", m.get("valence", 0), m.get("arousal", 0)))
+    c = d["calendar"]
+    if c.get("name"):
+        print("  日子    %s%s" % (c["name"], "（就是今天）" if c["today"] else "（%d 天后）" % c.get("in_days", 0)))
+    j = d["journal"]
+    if j:
+        print("  日记    %s" % j[-1]["text"])
+    print("")
+
+
 def cmd_rhythm(args) -> None:
     """Show the current daily state (derived from the clock)."""
     from . import rhythm
@@ -495,6 +525,10 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    lf = sub.add_parser("life", help="看它的作息、在场、关系、心情、日子、日记")
+    lf.add_argument("--id", default="")
+    lf.set_defaults(func=cmd_life)
 
     rh = sub.add_parser("rhythm", help="看它此刻的作息状态")
     rh.set_defaults(func=cmd_rhythm)

@@ -440,12 +440,23 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
     # Follow up only when the answer is short; avoid chattering.
     nxt = rng.choice(followups) if followups and rng.random() < 0.45 else ""
 
+    # A tired character does not keep asking questions back.
+    try:
+        from . import life_state
+
+        life = life_state.summary(profile)
+        if life["rhythm"]["wakefulness"] < 0.4:
+            nxt = ""
+    except Exception:  # noqa: BLE001
+        life = None
+
     return {
         "text": text,
         "intent": intent,
         "intent_zh": dict((k, z) for k, z, _ in INTENTS).get(intent, "自由交谈"),
         "emotion": emotion,
         "followup": nxt,
+        "life": life,
         "voice": voice,
         "memory": mem_used,
         "mood": emotion,

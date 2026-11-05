@@ -387,6 +387,12 @@ def observe(profile: dict, message: str, reply_text: str = "", intent: str = "",
     stats = profile["mind"].setdefault("stats", {})
     stats["messages"] = int(stats.get("messages", 0)) + 1
     stats["last_seen"] = _iso(now)
+    try:
+        from . import life_state
+
+        life_state.touch(profile, now)
+    except Exception:  # noqa: BLE001
+        pass
     return {"learned": learned, "mood": mood, "count": len(profile["mind"].get("memories", []))}
 
 
