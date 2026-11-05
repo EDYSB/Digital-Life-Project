@@ -2217,7 +2217,7 @@ function randomAction() {
         img.src = a.gif + '?' + Date.now();
         sayBubble(a.lines[Math.floor(Math.random() * a.lines.length)]);
         setTimeout(function () {
-            img.src = '/assets/anim/idle.gif?' + Date.now();
+            img.src = '/assets/df-idle.png?' + Date.now();
         }, 2600);
         randomAction();
     }, 12000 + Math.random() * 12000);
@@ -2227,7 +2227,7 @@ function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
   if (!img) return;
-  img.src = '/assets/anim/idle.gif';
+  img.src = '/assets/df-idle.png';
   img.classList.add('on');
   if (cv) cv.style.display = 'none';
   img.onclick = function () {
@@ -2235,7 +2235,7 @@ function startAvatarGif() {
     sayBubble(['哦鲸鲸…', '别戳我啦。', '在的。', '今天也要好好吃饭。'][Math.floor(Math.random() * 4)]);
     clearTimeout(startAvatarGif._t);
     startAvatarGif._t = setTimeout(function () {
-      img.src = '/assets/anim/idle.gif?' + Date.now();
+      img.src = '/assets/df-idle.png?' + Date.now();
     }, 2200);
   };
 }
