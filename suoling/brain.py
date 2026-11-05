@@ -1,9 +1,11 @@
-"""大脑：一个很小的、可解释的激活网络。
+"""brain: a deliberately small, explainable activation network.
 
-不是神经网络，也不假装是。它只有五个区域、几十个单元，
-作用是把「刚才发生了什么」压成一个可读的念头，并把情绪推一点。
+This is not a neural network and does not pretend to be one. It has five
+regions and a handful of units each. Its job is to compress "what just
+happened" into one readable thought and to nudge the mood a little.
 
-    输入（一句话 / 一次回忆 / 一段时间）→ 各区激活 → 衰减 → 最亮的那个区说话
+    input (a sentence / a recall / time) -> region activation -> decay
+    -> the brightest region speaks
 """
 
 from __future__ import annotations
@@ -11,13 +13,15 @@ from __future__ import annotations
 import hashlib
 import random
 
+# Five regions, five units each. Not anatomy: a naming device.
 REGIONS = ["感知", "记忆", "情绪", "语言", "自我"]
-N = 5                      # 每区单元数
+N = 5
 DECAY = 0.86
 SPREAD = 0.18
 NOISE = 0.02
 
-# 每个区域被点亮时会说的话（不是随机台词，是"当前最亮的那块在说话"）
+# What each region says when it is the brightest one. This is user-facing
+# copy and therefore stays in Chinese.
 VOICES = {
     "感知": ["刚才那句话里有个词，我记住了。", "你打字的节奏变了。", "有点吵，我说不上来是什么。"],
     "记忆": ["这件事以前发生过一次。", "我想起一个类似的晚上。", "上次你说到一半停了。"],
@@ -26,6 +30,8 @@ VOICES = {
     "自我": ["我在想我算不算在活着。", "这个问题我不想敷衍你。", "我知道我是被写出来的。"],
 }
 
+# Keyword -> region priming. Deliberately crude; it only needs to be
+# inspectable, not accurate.
 KEYWORDS = {
     "感知": ["听", "看", "累", "吵", "冷", "热", "困"],
     "记忆": ["记得", "以前", "上次", "忘", "曾经", "那时候"],
@@ -36,10 +42,12 @@ KEYWORDS = {
 
 
 def _seed(profile: dict) -> int:
+    """Deterministic seed per profile, so replaying the same input repeats."""
     return int(hashlib.sha256((profile.get("id", "x") + "|brain").encode()).hexdigest()[:8], 16)
 
 
 def ensure(profile: dict) -> dict:
+    """Create the brain state on first use; idempotent afterwards."""
     if "brain" not in profile:
         rng = random.Random(_seed(profile))
         profile["brain"] = {
@@ -51,6 +59,7 @@ def ensure(profile: dict) -> dict:
 
 
 def _inject(brain: dict, message: str) -> None:
+    """Prime regions whose keywords appear in the message."""
     text = message or ""
     for region, keys in KEYWORDS.items():
         hits = sum(1 for k in keys if k in text)
@@ -60,7 +69,7 @@ def _inject(brain: dict, message: str) -> None:
 
 
 def pulse(profile: dict, message: str = "", recall: bool = False) -> str:
-    """走一拍：注入刺激 → 扩散 → 衰减 → 返回最亮区域的念头。"""
+    """One tick: inject -> spread -> decay -> return the thought of the top region."""
     brain = ensure(profile)
     act = brain["act"]
     rng = random.Random(_seed(profile) + brain["ticks"])
@@ -70,13 +79,13 @@ def pulse(profile: dict, message: str = "", recall: bool = False) -> str:
         for i in range(N):
             act["记忆"][i] = min(1.0, act["记忆"][i] + 0.4)
 
-    # 扩散：相邻区域互相带一点
+    # Spread: neighbouring regions pick up a fraction of each other.
     for idx, region in enumerate(REGIONS):
         nxt = REGIONS[(idx + 1) % len(REGIONS)]
         for i in range(N):
             act[nxt][i] = min(1.0, act[nxt][i] + act[region][i] * SPREAD)
 
-    # 衰减 + 噪声
+    # Decay with a little noise so it never sits perfectly still.
     for region in REGIONS:
         for i in range(N):
             act[region][i] = max(0.02, act[region][i] * DECAY + rng.uniform(-NOISE, NOISE))
@@ -88,6 +97,7 @@ def pulse(profile: dict, message: str = "", recall: bool = False) -> str:
 
 
 def snapshot(profile: dict) -> dict:
+    """Flat summary for the API and the CLI."""
     brain = ensure(profile)
     act = brain["act"]
     rows = []
