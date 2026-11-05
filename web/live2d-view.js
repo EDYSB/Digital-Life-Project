@@ -3,14 +3,18 @@
   const MODEL = '/live2d/' + encodeURIComponent('大肥鱼.model3.json');
 
   async function mount(container, opts) {
+    return null;  // 开关：先关掉，等调试好再打开
     if (!window.PIXI || !PIXI.live2d) return null;
     const w = container.clientWidth || 300;
     const h = container.clientHeight || 380;
+    // 先在离屏容器里搭好；加载成功后才替换页面上的内容，
+    // 失败时原 canvas 原封不动，静态图继续显示。
+    const stage = document.createElement('div');
+    stage.style.cssText = 'width:100%;height:100%;position:relative';
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-    container.innerHTML = '';
-    container.appendChild(canvas);
+    stage.appendChild(canvas);
 
     const app = new PIXI.Application({
       view: canvas, width: w, height: h, backgroundAlpha: 0,
@@ -19,6 +23,8 @@
 
     const model = await PIXI.live2d.Live2DModel.from(MODEL, { autoInteract: false });
     app.stage.addChild(model);
+    container.innerHTML = '';
+    container.appendChild(stage);
 
     const s = Math.min(w / model.width, h / model.height) * 1.02;
     model.scale.set(s);

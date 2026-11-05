@@ -2166,7 +2166,8 @@ async function initWelcomePersona() {
   if (!cv) return;
   if (window.Live2DView && !welcomePersona) {
     try {
-      const v = await window.Live2DView.mount(cv.parentElement, {});
+      const host = document.querySelector('#avatar-host') || cv.parentElement;
+      const v = await window.Live2DView.mount(host, {});
       if (v) { welcomePersona = v; return; }
     } catch (e) { }
   }
