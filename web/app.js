@@ -382,9 +382,6 @@ function drawRadar(cv, traits, color) {
     c.font = `${10 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(t.name, lx, ly);
-    c.fillStyle = 'rgba(140,180,195,.75)';
-    c.font = `${9 * dpr}px "JetBrains Mono",Consolas,monospace`;
-    c.fillText(Math.round(t.value * 100), lx, ly + 12 * dpr);
   });
   c.restore();
 }
@@ -1116,10 +1113,9 @@ function renderDossier(p) {
     tl.innerHTML = traits.map(t => {
       const src = (t.sources || []).map(s => s.source + ' ' + Math.round(s.weight * 100) + '%').join(' · ') || '—';
       const f = t.fuse || {};
-      return `<div class="trait-row" title="EEG ${Math.round((f.eeg || 0) * 100)} / 基因 ${Math.round((f.gene || 0) * 100)}｜${esc(src)}">
+      return `<div class="trait-row" title="${esc(t.name)}">
         <span>${esc(t.name)}</span>
         <div class="bar"><i style="width:${clamp(t.value * 100, 3, 100)}%"></i></div>
-        <em>${Math.round(t.value * 100)}</em>
       </div>`;
     }).join('');
   });
@@ -1131,12 +1127,12 @@ function renderDossier(p) {
   const ch = p.eeg.waveform.channels[0] || [];
   const norm = normalizeSamples(ch);
   Wave.draw($('#wave-canvas'), norm);
-  $('#signal-sub').textContent = `EEG · ${p.eeg.channel_names[0] || 'CH1'} · ${p.eeg.seconds}s`;
+  $('#signal-sub').textContent = 'EEG';
 
   const bandNames = { delta: 'δ 深眠', theta: 'θ 潜意识', alpha: 'α 静息', beta: 'β 专注', gamma: 'γ 整合' };
   const bandColors = { delta: '#6b5bd2', theta: '#9b6bff', alpha: '#38e8ff', beta: '#ffb057', gamma: '#ff5fa2' };
   $('#band-legend').innerHTML = Object.entries(p.eeg.bands).map(([k, b]) =>
-    `<div><i style="background:${bandColors[k]}"></i>${bandNames[k]} · ${Math.round(b.rel * 100)}%</div>`).join('');
+    `<div><i style="background:${bandColors[k]}"></i>${bandNames[k]}</div>`).join('');
 
   requestAnimationFrame(() => {
     const sp = p.eeg.spectrum;

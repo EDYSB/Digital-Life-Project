@@ -176,6 +176,9 @@ def cmd_stats(args) -> None:
     print("  会话/消息 %s / %s" % (stats.get("sessions", 0), stats.get("messages", 0)))
     print("  记忆      %d 条" % len(mind.get("memories") or []))
     print("  心情      %s" % (eeg.get("mood") or "—"))
+    print("  七维      " + "  ".join(
+        "%s %d" % (t.get("name", ""), round(float(t.get("value", 0)) * 100))
+        for t in (profile.get("traits") or [])))
     print("")
 
 
