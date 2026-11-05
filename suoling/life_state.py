@@ -204,4 +204,4 @@ def letter(profile: dict, now=None) -> str:
     if d["stage"]["stage"] not in ("初次见面",):
         parts.append("我们现在算%s。" % d["stage"]["stage"])
     parts.append("我是%s。" % who)
-    return "".join(parts).strip()
+    return "".join(parts).replace("。。", "。").strip()
