@@ -30,6 +30,7 @@ USAGE = """数字生命初级 · 命令行
   dl scan --eeg 文件 --dna 文件 [--name 名字]
                               从脑电与基因文件生成一份档案
   dl chat --id 编号           与已保存的档案对话
+  dl tui [--id 编号]          在终端里开一个独立界面（不依赖浏览器）
   dl card --id 编号 [--out 文件] [--no-open]
                               生成可打印的数字生命卡
   dl export --id 编号 [--format md|json]
@@ -135,6 +136,11 @@ def cmd_chat(args) -> None:
         lines.append("**%s**：%s\n" % (per["name"], r["text"]))
 
 
+def cmd_tui(args) -> None:
+    from . import tui as tui_mod
+    tui_mod.main(args.id or None)
+
+
 def cmd_list(args) -> None:
     items = pipeline.list_minds()
     if not items:
@@ -218,6 +224,10 @@ def main(argv: list[str] | None = None) -> None:
     c = sub.add_parser("chat", help="与已保存的副本对话")
     c.add_argument("--id", required=True)
     c.set_defaults(func=cmd_chat)
+
+    t = sub.add_parser("tui", help="在终端里打开独立界面")
+    t.add_argument("--id", default="")
+    t.set_defaults(func=cmd_tui)
 
     ca = sub.add_parser("card", help="生成可打印的数字生命卡")
     ca.add_argument("--id", required=True)

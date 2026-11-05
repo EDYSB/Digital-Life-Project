@@ -259,7 +259,7 @@ h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em}
 .mono{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--text-2)}
 .tag{font-size:10px;letter-spacing:.08em;color:var(--text-3);border:1px solid var(--line-2);border-radius:999px;padding:2px 9px}
 .dossier-actions{display:flex;gap:8px;flex-wrap:wrap}
-.dossier-hero{display:grid;grid-template-columns:380px 1fr;gap:40px;align-items:center;padding:20px 0 50px}
+.dossier-hero{display:grid;grid-template-columns:1fr;gap:40px;align-items:center;padding:20px 0 50px}
 .orb-wrap{position:relative;width:100%;aspect-ratio:1;max-width:380px}
 #orb-canvas{width:100%;height:100%;position:relative;z-index:2}
 .orb-glow{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(56,232,255,.25),rgba(155,107,255,.10) 45%,transparent 70%);filter:blur(22px);animation:breathe 6s ease-in-out infinite}
@@ -726,3 +726,16 @@ h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em}
 .scene-exit{position:absolute;right:22px;top:18px;z-index:4;padding:7px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(5,8,12,.6);color:#cfe3ea;font-size:11px}
 .scene.dark .scene-bg{filter:brightness(.35)}
 .scene.dark .scene-window{opacity:.35}
+
+/* 拟人像填满档案左侧的框 */
+.orb-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.how-grid > div:last-child:nth-child(odd){grid-column:1 / -1}
+
+/* 档案左侧：方形卡片，别裁成圆 */
+.dossier-hero .orb-wrap{
+  height:auto!important;aspect-ratio:1/1;align-self:center;
+  border-radius:0!important;overflow:hidden;
+  background:#050b13!important;border:1px solid #e8e8e8!important;
+}
+.dossier-hero .orb-wrap canvas{border-radius:0!important}
+.dossier-hero .orb-glow{display:none}

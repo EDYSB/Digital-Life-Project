@@ -1379,11 +1379,16 @@ async function openChat() {
   state.chat = [];
   const chatCv = $('#chat-avatar-canvas');
   const hasFace = !!(p.avatar && p.avatar.views && p.avatar.views.length);
-  if (!chatAvatar) chatAvatar = new Avatar(chatCv, { color: p.persona.color });
+  if (!chatAvatar) {
+    chatAvatar = window.PersonaAvatar
+      ? new PersonaAvatar(chatCv, { color: p.persona.color })
+      : new Avatar(chatCv, { color: p.persona.color });
+  }
   chatAvatar.setColor(p.persona.color);
-  if (hasFace) chatAvatar.setViews(p.avatar.views);
-  else chatAvatar.setVector();
-  $('#chat-orb-canvas').hidden = true;
+  if (hasFace && chatAvatar.setViews) chatAvatar.setViews(p.avatar.views);
+  else if (chatAvatar.setVector) chatAvatar.setVector();
+  const orbCv = $('#chat-orb-canvas');
+  if (orbCv) orbCv.hidden = true;
   setSubtitle('');
 
   let session = null;
