@@ -2182,6 +2182,7 @@ function wireWelcome() {
   const hs = $('#btn-home-say');
   if (hs) hs.addEventListener('click', () => { const v = hi ? hi.value : ''; if (hi) hi.value = ''; homeSend(v); });
   if (hi) hi.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const v = hi.value; hi.value = ''; homeSend(v); });
+  if (location.search.indexOf('classic=1') >= 0) { setWelcomeMode('classic'); return; }
   let saved = 'persona';
   try { saved = localStorage.getItem('dl_welcome_mode') || 'persona'; } catch (e) { }
   setWelcomeMode(saved);
