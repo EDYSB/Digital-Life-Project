@@ -15,6 +15,7 @@ Digital Life L1 · Command Reference
   dl                          显示帮助
   dl demo                     用内置样本跑一遍完整流程
   dl scan --eeg F --dna F     从两个文件生成档案
+  dl create                   手工创造一个数字生命（仅命令行）
   dl list                     列出已保存的数字生命
   dl chat --id ID             与档案对话（逐行）
   dl tui  --id ID             在终端里开全屏界面
@@ -181,3 +182,7 @@ A: 先关掉 dl serve 的窗口或 Ctrl+C，否则它会把档案写回去。
 
 Q: 没有 GPU 能用吗？
 A: 能。网页端的立绘与动作不需要 GPU；只有接数字人后端时才需要。
+
+dl create [--name 名字] [--voice calm|warm|sharp|neutral] [--traits 好奇=70,共情=80]
+  手工创造一个数字生命：不传脑电与基因，七维数值自己定，0-100。
+  同样参数 = 同样编号，可复现。只支持命令行，网页不能创建。

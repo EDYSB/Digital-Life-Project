@@ -280,6 +280,13 @@ def cmd_brain(args) -> None:
     print("")
 
 
+def cmd_create(args) -> None:
+    """Hand-build a digital life (command line only)."""
+    from . import create as create_mod
+
+    create_mod.run(name=args.name, voice=args.voice, traits_text=args.traits)
+
+
 def cmd_brain_ui(args) -> None:
     """Open the standalone brain visualisation. Nothing starts until this
     command is run."""
@@ -473,6 +480,12 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    cr = sub.add_parser("create", help="手工创造一个数字生命（仅命令行）")
+    cr.add_argument("--name", default="")
+    cr.add_argument("--voice", default="", choices=["", "calm", "warm", "sharp", "neutral"])
+    cr.add_argument("--traits", default="", help="好奇=70,共情=80 这样写，0-100")
+    cr.set_defaults(func=cmd_create)
 
     bu = sub.add_parser("brain-ui", help="打开大脑的独立可视化页面")
     bu.set_defaults(func=cmd_brain_ui)
