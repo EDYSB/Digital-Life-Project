@@ -2187,6 +2187,15 @@ function setWelcomeMode(mode) {
   try { localStorage.setItem('dl_welcome_mode', mode); } catch (e) { }
 }
 
+function sayBubble(text, ms) {
+  const b = $('#avatar-bubble');
+  if (!b) return;
+  b.textContent = text;
+  b.classList.add('on');
+  clearTimeout(sayBubble._t);
+  sayBubble._t = setTimeout(function () { b.classList.remove('on'); }, ms || 3200);
+}
+
 function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
@@ -2196,11 +2205,35 @@ function startAvatarGif() {
   if (cv) cv.style.display = 'none';
   img.onclick = function () {
     img.src = '/assets/anim/happy.gif?' + Date.now();
+    sayBubble(['哦鲸鲸…', '别戳我啦。', '在的。', '今天也要好好吃饭。'][Math.floor(Math.random() * 4)]);
     clearTimeout(startAvatarGif._t);
     startAvatarGif._t = setTimeout(function () {
       img.src = '/assets/anim/idle.gif?' + Date.now();
     }, 2200);
   };
+  img.oncontextmenu = function (e) {
+    e.preventDefault();
+    const m = $('#ctx-menu');
+    if (!m) return;
+    m.hidden = false;
+    m.style.left = Math.min(e.clientX, window.innerWidth - 150) + 'px';
+    m.style.top = Math.min(e.clientY, window.innerHeight - 190) + 'px';
+  };
+  document.addEventListener('click', function (e) {
+    const m = $('#ctx-menu');
+    if (m && !m.hidden && !m.contains(e.target)) m.hidden = true;
+  });
+  const menu = $('#ctx-menu');
+  if (menu) menu.addEventListener('click', function (e) {
+    const act = e.target.getAttribute('data-act');
+    if (!act) return;
+    menu.hidden = true;
+    if (act === 'idle') { img.src = '/assets/anim/idle.gif?' + Date.now(); sayBubble('嗯。'); }
+    if (act === 'talk') { const i = $('#home-input'); if (i) i.focus(); }
+    if (act === 'mutter') sayBubble(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)]);
+    if (act === 'meme') showMeme();
+    if (act === 'work') { img.src = '/assets/anim/think.gif?' + Date.now(); sayBubble('在想事情…', 2400); }
+  });
 }
 
 /* 自主意图：安静久了，她会自己开口 */

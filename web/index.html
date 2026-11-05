@@ -73,6 +73,7 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
   <!-- ============ 0. WELCOME ============ -->
   <section class="view active" id="view-welcome">
     <div class="persona-stage" id="welcome-persona">
+      <div class="avatar-bubble" id="avatar-bubble"></div>
       <div class="avatar-host" id="avatar-host"><img id="avatar-gif" class="avatar-gif" alt=""><canvas id="persona-canvas"></canvas></div>
       <div class="home-log" id="home-log"></div>
       <div class="home-greet" id="home-greet">
@@ -726,5 +727,12 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
 <script src="/memes.js"></script>
 <script src="/app.js"></script>
 <footer class=site-credit>形象：DeepSeek-chan（大肥鱼）· 原画/拆分 神宫凉子 · Live2D 建模 霓虹猫_NeonNeko · 免费配布模型</footer>
+<div class="ctx-menu" id="ctx-menu" hidden>
+  <button data-act="idle">待机</button>
+  <button data-act="talk">对话</button>
+  <button data-act="mutter">碎碎念</button>
+  <button data-act="meme">表情</button>
+  <button data-act="work">工作状态</button>
+</div>
 </body>
 </html>

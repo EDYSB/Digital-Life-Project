@@ -833,3 +833,18 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 .avatar-gif.on{display:block}
 
 .bub.pc{background:#f2f7fa;color:#4a5b66;font-style:italic}
+
+/* 头顶气泡 + 右键菜单 */
+.avatar-bubble{position:relative;max-width:420px;margin:0 auto 6px;padding:10px 16px;
+  background:#fff;border:1px solid #e3e9ed;border-radius:14px;font-size:13px;line-height:1.7;
+  color:#2a343a;letter-spacing:.02em;opacity:0;transform:translateY(4px);
+  transition:opacity .2s,transform .2s;pointer-events:none}
+.avatar-bubble.on{opacity:1;transform:none}
+.avatar-bubble::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;
+  background:#fff;border-right:1px solid #e3e9ed;border-bottom:1px solid #e3e9ed;
+  transform:translateX(-50%) rotate(45deg)}
+.ctx-menu{position:fixed;z-index:90;min-width:132px;padding:6px;background:#fff;
+  border:1px solid #e3e9ed;border-radius:10px;box-shadow:0 14px 40px rgba(12,20,26,.16)}
+.ctx-menu button{display:block;width:100%;text-align:left;padding:8px 12px;border:0;
+  background:transparent;border-radius:6px;font-size:12.5px;color:#2a343a;cursor:pointer}
+.ctx-menu button:hover{background:#f1f5f7}
