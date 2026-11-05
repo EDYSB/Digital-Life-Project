@@ -154,3 +154,39 @@ def digest(mind_id: str, day: str | None = None, persist: bool = True) -> str:
                 )
             c.close()
     return text
+
+
+def recall_day(mind_id: str, day: str | None = None) -> dict:
+    """The most recent earlier day that has something worth mentioning."""
+    day = day or _dt.date.today().isoformat()
+    c = _conn()
+    row = c.execute(
+        "SELECT day, summary FROM days WHERE mind_id=? AND day<? AND summary!='' "
+        "ORDER BY day DESC LIMIT 1",
+        (mind_id, day),
+    ).fetchone()
+    if not row:
+        row = c.execute(
+            "SELECT substr(at,1,10) AS d, '' FROM turns WHERE mind_id=? AND substr(at,1,10)<? "
+            "GROUP BY d ORDER BY d DESC LIMIT 1",
+            (mind_id, day),
+        ).fetchone()
+    c.close()
+    if not row:
+        return {}
+    summary = row[1] or digest(mind_id, row[0])
+    return {"day": row[0], "summary": summary}
+
+
+def callback_line(mind_id: str, day: str | None = None) -> str:
+    """One sentence that picks yesterday back up."""
+    prev = recall_day(mind_id, day)
+    if not prev or not prev.get("summary"):
+        return ""
+    text = prev["summary"]
+    quote = ""
+    if "「" in text and "」" in text:
+        quote = text.split("「", 1)[1].split("」", 1)[0]
+    if quote:
+        return "昨天你说「%s」，今天呢？" % quote
+    return "昨天的事我还记得，今天呢？"

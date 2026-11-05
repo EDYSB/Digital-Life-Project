@@ -204,4 +204,12 @@ def letter(profile: dict, now=None) -> str:
     if d["stage"]["stage"] not in ("初次见面",):
         parts.append("我们现在算%s。" % d["stage"]["stage"])
     parts.append("我是%s。" % who)
+    try:
+        from . import records
+
+        back = records.callback_line(str(profile.get("id", "")))
+        if back:
+            parts.append(back)
+    except Exception:  # noqa: BLE001
+        pass
     return "".join(parts).replace("。。", "。").strip()
