@@ -2707,7 +2707,10 @@ function glyphGuard(root) {
   imgs.forEach(function (img) {
     if (img.dataset.guarded) return;
     img.dataset.guarded = '1';
-    img.addEventListener('error', function () { img.style.display = 'none'; });
+    img.addEventListener('error', function () {
+      console.warn('[img-failed]', img.id || '(no id)', img.className, img.getAttribute('src'));
+      img.style.display = 'none';
+    });
     img.addEventListener('load', function () {
       if (img.naturalWidth > 0) img.style.removeProperty('display');
     });
