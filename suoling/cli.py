@@ -1,4 +1,4 @@
-"""数字生命初级 · 命令行。
+"""Digital Life L1 - command line.
 
   python -m suoling.cli serve [--port 8017]
   python -m suoling.cli scan --eeg samples/eeg_meditation.csv --dna samples/dna_sensitive.fasta --name 我
@@ -139,7 +139,7 @@ def cmd_chat(args) -> None:
 
 
 def cmd_mode(args) -> None:
-    """gpu / pet / auto。没有 GPU 就用桌宠。"""
+    """gpu / web / auto. Without a GPU the web viewer is used."""
     from . import config
 
     if not args.name:
@@ -162,7 +162,7 @@ def cmd_mode(args) -> None:
 
 
 def cmd_api(args) -> None:
-    """看或设置 API key：dl api sk-xxx / dl api --clear / dl api"""
+    """Show or set the API key: dl api sk-xxx / dl api --clear / dl api"""
     from . import config
 
     if args.clear:
@@ -189,7 +189,8 @@ def cmd_api(args) -> None:
 
 
 def cmd_account(args) -> None:
-    """建账户（可选）。不建也能用，只是档案在公共目录。"""
+    """Create an account (optional). Without one, dossiers stay in the
+    shared directory."""
     from . import lock
     import getpass
 
@@ -255,7 +256,7 @@ def cmd_tui(args) -> None:
 
 
 def cmd_brain(args) -> None:
-    """看它现在脑子里最亮的是哪一块。"""
+    """Show which region of the brain is currently the brightest."""
     from . import brain as brain_mod
 
     items = pipeline.list_minds()
@@ -280,7 +281,8 @@ def cmd_brain(args) -> None:
 
 
 def cmd_brain_ui(args) -> None:
-    """打开大脑的独立可视化页面（不自动启动，只在这个命令里开）。"""
+    """Open the standalone brain visualisation. Nothing starts until this
+    command is run."""
     import socket
     import time
     import webbrowser
@@ -322,7 +324,7 @@ def cmd_brain_ui(args) -> None:
 
 
 def cmd_stats(args) -> None:
-    """后台：参数只在这里看。"""
+    """Backend view: parameters are shown here and nowhere else."""
     items = pipeline.list_minds()
     if not items:
         print("还没有档案。先运行：dl demo")

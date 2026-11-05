@@ -1,4 +1,4 @@
-"""数字生命初级 本地服务器（纯标准库）。
+"""Digital Life L1 local server (standard library only).
 
 启动：
   python -m suoling.server --port 8017
@@ -65,7 +65,7 @@ def _get(mind_id: str) -> dict | None:
 
 # ---------------------------------------------------------------- multipart
 def parse_multipart(body: bytes, content_type: str) -> dict[str, list[dict]]:
-    """极简 multipart/form-data 解析。返回 {field: [{filename, content}]}。"""
+    """Minimal multipart/form-data parser. Returns {field: [{filename, content}]}."""
     if "boundary=" not in content_type:
         raise ValueError("缺少 boundary")
     boundary = content_type.split("boundary=", 1)[1].strip().strip('"')

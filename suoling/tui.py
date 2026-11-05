@@ -1,4 +1,4 @@
-"""数字生命 · 终端界面（TUI）。
+"""Digital Life - terminal UI (TUI).
 
 在 cmd / PowerShell 里单独开一个界面，不依赖浏览器：
     dl tui
@@ -31,9 +31,9 @@ ACCENT = (79, 227, 255)
 RESET = ESC + "[0m"
 
 
-# ---------------------------------------------------------------- 终端控制
+# ---------------------------------------------------------------- terminal control
 def enable_vt() -> None:
-    """让 cmd.exe 支持 ANSI 转义。"""
+    """Enable ANSI escapes in cmd.exe."""
     if os.name != "nt":
         return
     try:
@@ -66,29 +66,29 @@ def clear() -> None:
     put(ESC + "[2J" + ESC + "[H")
 
 
-# ---------------------------------------------------------------- 拟人像
+# ---------------------------------------------------------------- portrait
 def pixel_color(u: float, v: float, t: float, glow: float) -> tuple[int, int, int] | None:
-    """返回该像素的颜色；None 表示透明（保留背景）。"""
-    # 头部椭圆
+    """Colour of one pixel; None means transparent (keep the background)."""
+    # Head ellipse.
     hx, hy, hrx, hry = 0.50, 0.40, 0.165, 0.205
     dx = (u - hx) / hrx
     dy = (v - hy) / hry
     in_head = dx * dx + dy * dy <= 1.0
 
-    # 后发
+    # Back hair.
     bx, by, brx, bry = 0.50, 0.395, 0.205, 0.235
     bdx = (u - bx) / brx
     bdy = (v - by) / bry
     in_hair_back = bdx * bdx + bdy * bdy <= 1.0
 
-    # 肩膀
+    # Shoulders.
     in_body = v > 0.735 and abs(u - 0.5) < 0.44
     if v > 0.735:
-        # 肩线：越靠下越宽
+        # Shoulder line widens downwards.
         width = 0.20 + (v - 0.735) * 1.55
         in_body = abs(u - 0.5) < width
 
-    # 眼睛
+    # Eyes.
     eye_y = 0.415
     eye_dx = 0.062
     eye_rx, eye_ry = 0.036, 0.030
@@ -99,7 +99,7 @@ def pixel_color(u: float, v: float, t: float, glow: float) -> tuple[int, int, in
         edy = (v - eye_y) / (eye_ry * max(0.08, blink))
         d2 = edx * edx + edy * edy
         if d2 <= 1.0:
-            # 虹膜：中心亮，边缘青
+            # Iris: bright centre, cyan edge.
             k = min(1.0, math.sqrt(d2))
             r = int(200 * (1 - k) + 40 * k)
             g = int(250 * (1 - k) + 150 * k)
@@ -107,7 +107,7 @@ def pixel_color(u: float, v: float, t: float, glow: float) -> tuple[int, int, in
             return (r, g, b)
 
     if in_head:
-        # 皮肤（很暗，只有轮廓感和一点面部高光）
+        # Skin, very dark: an outline plus a faint highlight.
         shade = 1.0 - min(1.0, abs(u - 0.5) * 3.2)
         return (int(16 + 10 * shade), int(26 + 14 * shade), int(38 + 18 * shade))
     if in_hair_back:
@@ -118,7 +118,7 @@ def pixel_color(u: float, v: float, t: float, glow: float) -> tuple[int, int, in
 
 
 def render_portrait(width: int, height: int, t: float, blink_phase: float) -> list[str]:
-    """用 ▀ 半块字符把像素画渲染成文本行。"""
+    """Render the pixel art as text lines using the half-block char."""
     px_w = width
     px_h = height * 2
     rows: list[str] = []
@@ -145,7 +145,7 @@ def render_portrait(width: int, height: int, t: float, blink_phase: float) -> li
     return rows
 
 
-# ---------------------------------------------------------------- 界面
+# ---------------------------------------------------------------- layout
 class Tui:
     def __init__(self, profile: dict):
         self.p = profile
@@ -160,7 +160,7 @@ class Tui:
         self.scroll = 0
         self._greet()
 
-    # -- 状态
+    # -- state
     def mood(self) -> tuple[float, float, str]:
         mind = (self.p.get("mind") or {}).get("mood") or {}
         return (
@@ -178,7 +178,7 @@ class Tui:
         self.lines.append(("sys", "%s · %s" % (self.per.get("name", "—"), self.per.get("title", ""))))
         self.lines.append(("ai", opening))
 
-    # -- 绘制
+    # -- drawing
     def draw(self) -> None:
         w, h = term_size()
         left_w = max(26, min(38, w // 3))
@@ -190,7 +190,7 @@ class Tui:
         head = title + " " * max(0, w - len(title) - 1)
         out.append(goto(1, 1) + head[:w])
 
-        # 左栏拟人像
+        # Left column: portrait.
         pw = left_w - 2
         ph = max(6, top + (bottom - top) // 2 - 2)
         blink_gap = time.time() - self.blink_at
@@ -205,18 +205,18 @@ class Tui:
         for i, r in enumerate(rows):
             out.append(goto(top + i, 2) + r)
 
-        # 竖分隔
+        # Vertical divider.
         for y in range(top, bottom + 1):
             out.append(goto(y, left_w) + ESC + "[38;2;40;60;75m│" + RESET)
 
-        # 右栏对话
+        # Right column: conversation.
         rw = w - left_w - 2
         body_h = bottom - top
         visible = self._wrap_lines(rw, body_h)
         for i, (who, text, color) in enumerate(visible):
             out.append(goto(top + i, left_w + 2) + color + text + RESET)
 
-        # 状态条
+        # Status bar.
         a, v_, label = self.mood()
         drives = ((self.p.get("mind") or {}).get("agency") or {}).get("drives") or {}
         mem = len(((self.p.get("mind") or {}).get("memories")) or [])
@@ -225,7 +225,7 @@ class Tui:
         out.append(goto(h - 1, 1) + ESC + "[48;2;8;14;22m" + ESC + "[38;2;90;150;175m" + bar.ljust(w)[:w])
         out.append(RESET)
 
-        # 输入行
+        # Input line.
         prompt = " > "
         out.append(goto(h, 1) + ESC + "[38;2;79;227;255m" + prompt + RESET)
         out.append(goto(h, len(prompt) + 1) + ESC + "[38;2;230;245;255m" + self.input[-max(10, w - 8):] + RESET)
@@ -258,10 +258,10 @@ class Tui:
                 else:
                     rows.append(("", " " * len(prefix) + c, color))
             rows.append(("", "", ""))
-        # 只显示最后 height 行
+        # Keep only the last `height` rows.
         return rows[-height:] if len(rows) > height else rows
 
-    # -- 交互
+    # -- interaction
     def read_key(self) -> str:
         ch = msvcrt.getwch()
         if ch in ("\x00", "\xe0"):      # 方向键等
@@ -312,7 +312,7 @@ class Tui:
                 elif ch.isprintable():
                     self.input += ch
                     self.draw()
-                # 眨眼
+                # Blink.
                 if time.time() - self.blink_at > 4.0:
                     self.blink_at = time.time()
         finally:
