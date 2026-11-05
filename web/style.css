@@ -822,3 +822,9 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 .admin-fold[open] summary{color:#101312}
 .admin-totals{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 18px}
 .admin-totals > *{border:1px solid #e9eef1;border-radius:10px;padding:10px 16px;font-size:12px;color:#54646e}
+
+.meme-pop{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
+  max-width:min(420px,70vw);max-height:60vh;border-radius:12px;pointer-events:none;
+  opacity:0;transition:opacity .18s,transform .18s;z-index:80;
+  box-shadow:0 18px 50px rgba(10,18,26,.28)}
+.meme-pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}

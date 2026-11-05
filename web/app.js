@@ -2188,6 +2188,8 @@ function setWelcomeMode(mode) {
 }
 
 function wireWelcome() {
+  const host = document.querySelector('#avatar-host');
+  if (host) host.addEventListener('click', showMeme);
   const input = $('#persona-input');
   if (input) {
     input.addEventListener('keydown', function (e) {
@@ -2244,6 +2246,23 @@ async function homeSend(text) {
     } catch (e) {
         log.lastChild.textContent = '（没接通）';
     }
+}
+
+/* 点她一下：弹一张表情包 */
+function showMeme() {
+  const list = window.DL_MEMES || [];
+  if (!list.length) return;
+  let box = document.querySelector('#meme-pop');
+  if (!box) {
+    box = document.createElement('img');
+    box.id = 'meme-pop';
+    box.className = 'meme-pop';
+    document.body.appendChild(box);
+  }
+  box.src = '/assets/memes/' + list[Math.floor(Math.random() * list.length)];
+  box.classList.add('on');
+  clearTimeout(showMeme._t);
+  showMeme._t = setTimeout(function () { box.classList.remove('on'); }, 2600);
 }
 
 function wireUI() {
