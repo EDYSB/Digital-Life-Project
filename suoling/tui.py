@@ -220,7 +220,7 @@ class Tui:
         a, v_, label = self.mood()
         drives = ((self.p.get("mind") or {}).get("agency") or {}).get("drives") or {}
         mem = len(((self.p.get("mind") or {}).get("memories")) or [])
-        bar = " 心跳 %d bpm   %s   记忆 %d   联结 %d%% " % (
+        bar = " 心跳 %d bpm   %s   记忆 %d   联结 %d%%   ♥ LOVE " % (
             self.bpm(), label, mem, int(float(drives.get("connection", 0)) * 100))
         out.append(goto(h - 1, 1) + ESC + "[48;2;8;14;22m" + ESC + "[38;2;90;150;175m" + bar.ljust(w)[:w])
         out.append(RESET)

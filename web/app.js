@@ -1036,6 +1036,10 @@ function renderDossier(p) {
   $('#d-created').textContent = isNaN(dt) ? p.created_at : dt.toLocaleString('zh-CN', { hour12: false });
   $('#d-name').textContent = per.name;
   $('#d-title').textContent = per.title;
+  const coreLine = $('#d-core');
+  if (coreLine) {
+    coreLine.textContent = (p.core && p.core.line) || 'Love，就是爱。解析到最后，只剩这一个词：爱自己，也爱别人。';
+  }
   $('#d-summary').textContent = per.summary;
   $('#d-limits').textContent = per.limits;
 

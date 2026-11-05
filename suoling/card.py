@@ -41,6 +41,7 @@ h3{font-size:11px;letter-spacing:.14em;color:#666;font-weight:400;margin:0 0 8px
 .codebar{display:flex;gap:2px;height:34px;margin-top:18px;align-items:flex-end}
 .codebar i{display:block;background:#111}
 .foot{display:flex;justify-content:space-between;margin-top:18px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#777}
+.love{margin-top:14px;padding-top:10px;border-top:1px solid #e8e8e8;font-size:10px;letter-spacing:.22em;color:#111}
 @media print{body{margin:0}.card{margin:0;border:0}}
 </style></head><body><div class="card">
   <div class="top"><div><div class="brand">DIGITAL LIFE PROJECT</div><div class="code">%(code)s</div></div><div class="level">LEVEL 1</div></div>
@@ -63,6 +64,7 @@ h3{font-size:11px;letter-spacing:.14em;color:#666;font-weight:400;margin:0 0 8px
     </div>
   </div>
   <div class="codebar">%(codebar)s</div>
+  <div class="love">LOVE　·　爱自己，也爱别人</div>
   <div class="foot"><span>%(id)s</span><span>Digital Life Project · L1</span></div>
 </div></body></html>""" % {
         "code": _e(code), "name": _e(name), "born": _e((profile.get("created_at") or "")[:16].replace("T", " ")),

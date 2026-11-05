@@ -14,6 +14,8 @@ from __future__ import annotations
 import hashlib
 import random
 
+from . import core as core_mod
+
 INTENTS = [
     ("greeting", "问候", ["你好", "在吗", "嗨", "hi", "hello", "早上好", "晚上好", "醒着吗"]),
     ("identity", "身份", ["你是谁", "你叫什么", "你的名字", "你是什么", "你真的是", "你是人吗", "你是ai", "你是程序"]),
@@ -375,6 +377,8 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
             "world": world,
             "disclaimer": "算力不足时的自我保护状态，不是意识。",
         }
+    if core_mod.matches(message):
+        return core_mod.reply(profile, message)
     voice = profile.get("persona", {}).get("voice", "calm")
     if voice not in REPLIES["greeting"]:
         voice = "neutral"

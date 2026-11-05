@@ -10,7 +10,7 @@ import random
 import re
 import time
 
-from . import agency as agency_mod, world as world_mod, analysis, dialogue, eeg as eeg_mod, genome as genome_mod, memory as memory_mod, persona as persona_mod, signal as sig
+from . import agency as agency_mod, core as core_mod, world as world_mod, analysis, dialogue, eeg as eeg_mod, genome as genome_mod, memory as memory_mod, persona as persona_mod, signal as sig
 
 VERSION = "1.0.0"
 MIND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "minds")
@@ -251,6 +251,7 @@ def build(
     profile["mind"]["stats"]["sessions"] = 0
     profile["mind"]["stats"]["messages"] = 0
     profile["conversation"] = dialogue.demo_exchange(profile)
+    profile["core"] = {"word": core_mod.LOVE_WORD, "line": core_mod.LOVE_LINE}
     emit("finish", 100, "数字生命已录入", "core")
     return profile
 

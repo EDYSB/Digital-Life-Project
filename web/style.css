@@ -739,3 +739,6 @@ h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em}
 }
 .dossier-hero .orb-wrap canvas{border-radius:0!important}
 .dossier-hero .orb-glow{display:none}
+
+/* 内核：Love */
+.core-line{margin:4px 0 16px;font-size:12.5px;letter-spacing:.1em;color:#3d9db8}
