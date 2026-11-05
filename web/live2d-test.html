@@ -7,7 +7,7 @@
 <script src="/vendor/cubism4.min.js"></script>
 <div id="host" style="width:600px;height:700px"></div>
 <script>
-const log = (...a) => fetch('/log', {method:'POST', body: a.join(' ')}).catch(()=>{});
+const log = (...a) => console.log('[l2d]', ...a);
 (async () => {
   try {
     log('PIXI', typeof PIXI, '| live2d', typeof (window.PIXI && PIXI.live2d), '| core', typeof Live2DCubismCore);
