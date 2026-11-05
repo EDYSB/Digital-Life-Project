@@ -224,7 +224,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send_error(HTTPStatus.NOT_FOUND, "还没有档案。")
                 from . import brain as brain_mod
 
-                return self._send_json(brain_mod.snapshot(prof))
+                snap = brain_mod.snapshot(prof)
+                mood = (prof.get("mind") or {}).get("mood") or {}
+                mems = (prof.get("mind") or {}).get("memories") or []
+                snap["mood"] = mood.get("label") or ""
+                snap["hit"] = (mems[-1].get("text") if mems else "") or ""
+                snap["name"] = (prof.get("persona") or {}).get("name") or ""
+                return self._send_json(snap)
             return self._serve_static(path)
         except BrokenPipeError:
             return

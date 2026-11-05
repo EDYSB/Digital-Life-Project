@@ -40,6 +40,7 @@
   <div class="sub" id="c-sub">—</div>
   <div class="spark" id="c-spark"></div>
   <div class="q" id="c-q">—</div>
+  <div class="sub" id="c-extra" style="margin-top:12px"></div>
 </div>
 <div class="quote">我想做的，是把她在时间里留下的痕迹，延长得再久一些。</div>
 <script>
@@ -100,6 +101,7 @@ async function poll() {
     ticks = d.ticks;
     remoteOk = true;
     renderBars();
+    lastMood = d.mood || lastMood; lastHit = d.hit || lastHit;
     if (selected >= 0) renderCard();
     if (d.last && d.last !== lastShown) {
       lastShown = d.last;
@@ -126,6 +128,8 @@ function step() {
 }
 setInterval(step, 900);
 
+let lastMood = '', lastHit = '';
+
 function renderBars() {
   document.getElementById('bars').innerHTML = REGIONS.map(function (r, i) {
     return '<div><span>' + r.name + '</span><b>' + act[i].toFixed(2) + '</b></div>';
@@ -148,6 +152,8 @@ function renderCard() {
     return '<i style="height:' + Math.max(3, v * 34) + 'px;opacity:' + (0.35 + v * 0.65) + '"></i>';
   }).join('');
   document.getElementById('c-q').textContent = VOICES[REGIONS[i].name][0];
+  const ex = document.getElementById('c-extra');
+  if (ex) ex.textContent = (lastMood ? '心情 ' + lastMood : '') + (lastHit ? ' · 最近想起：' + lastHit.slice(0, 18) : '');
 }
 
 function layout() {
