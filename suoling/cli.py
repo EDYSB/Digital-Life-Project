@@ -24,24 +24,42 @@ from .genome import DNAError
 
 USAGE = """数字生命初级 · 命令行
 
-  dl                          显示这份帮助
-  dl serve [--port 8017]      启动本地界面（默认 8017）
-  dl list                     列出已保存的数字生命
-  dl scan --eeg 文件 --dna 文件 [--name 名字]
-                              从脑电与基因文件生成一份档案
-  dl chat --id 编号           与已保存的档案对话
-  dl tui [--id 编号]          在终端里开一个独立界面（不依赖浏览器）
-  dl final [--id 编号]        说出最后一句；Y 确认后写手记并自毁档案
-  dl stats [--id 编号]        后台：查看全部参数（前台不显示）
-  dl card --id 编号 [--out 文件] [--no-open]
-                              生成可打印的数字生命卡
-  dl export --id 编号 [--format md|json]
-                              导出档案
-  dl demo                     用内置样本跑一遍完整流程
+  档案
+    dl demo                      用内置样本跑一遍完整流程
+    dl scan --eeg F --dna F      从脑电与基因文件生成
+    dl create                    手工创造一个（仅命令行）
+    dl list                      列出已保存的全部
+    dl export --id ID            导出 md / json
+    dl card --id ID              生成可打印的生命卡
 
-示例：
+  对话
+    dl chat --id ID              逐行对话
+    dl tui [--id ID]             终端全屏界面
+    dl journal [--id ID]         记录：每天说了多少、最近说了什么
+    dl life [--id ID]            作息 / 在场 / 关系 / 心情 / 日子 / 日记
+
+  后台
+    dl stats [--id ID]           参数，只在这里看
+    dl brain [--id ID]           五个脑区的激活
+    dl brain-ui                  打开大脑可视化页面
+    dl final [--id ID]           最后一晚：写手记并自毁
+
+  运行
+    dl serve [--port 8017]       网页界面
+    dl mode                      看画面与模型两套开关
+    dl mode web|gpu|auto         画面
+    dl mode api|ollama|rules     由谁回答（旧名 dl model 仍可用）
+    dl api [key] | dl api --test 填 key、验证连通性
+    dl account / login / logout  可选账户
+    dl whoami                    当前身份与档案目录
+
+  旧名仍可用：dl rhythm → dl life，dl model → dl mode
+
+示例
   dl scan --eeg samples/eeg_meditation.csv --dna samples/dna_sensitive.fasta --name 我
-  dl list"""
+  dl life
+  dl run: dl serve 然后浏览器打开 127.0.0.1:8017
+"""
 
 
 def cmd_help(args) -> None:
@@ -139,26 +157,54 @@ def cmd_chat(args) -> None:
 
 
 def cmd_mode(args) -> None:
-    """gpu / web / auto. Without a GPU the web viewer is used."""
+    """One switch for two things: how it renders, and which model answers."""
+    from . import config, llm
+
+    cfg = config.load()
+    name = (args.name or "").lower()
+
+    if not name:
+        info = llm.detect(force=True)
+        print("")
+        print("  画面：%s" % (cfg.get("mode") or "auto"))
+        print("     gpu   接 VoxEMW / LiveTalking 这类后端，真人级口型")
+        print("     web   浏览器里的立绘与动作（默认）")
+        print("     auto  有 voice_backend 就 gpu，否则 web")
+        print("")
+        print("  模型：%s" % (cfg.get("llm_mode") or "auto"))
+        print("     实际：%s" % (info["note"] or "—"))
+        if info["kind"] != "none":
+            print("     模型：%s" % info["model"])
+        print("     api     只用 DeepSeek（需要 key）")
+        print("     ollama  只用本机模型（自动选已装的）")
+        print("     rules   强制规则对话，不联网")
+        print("     auto    有 key 用 api，否则找本机模型")
+        print("")
+        print("  切换：dl mode web / dl mode ollama / dl mode rules …")
+        print("")
+        return
+
+    if name in ("gpu", "web", "auto"):
+        _save({"mode": name})
+        print("  画面已切到：%s" % name)
+        return
+
+    if name in ("api", "ollama", "rules"):
+        _save({"llm_mode": name})
+        info = llm.detect(force=True)
+        print("  模型已切到：%s（%s）" % (name, info["note"] or "—"))
+        return
+
+    print("  只能选：gpu / web / auto / api / ollama / rules")
+
+
+def _save(patch: dict) -> None:
+    """Merge into config instead of replacing the whole file."""
     from . import config
 
-    if not args.name:
-        cfg = config.load()
-        print("")
-        print("  当前模式：%s" % (cfg.get("mode") or "auto"))
-        print("  gpu  —— 接 VoxEMW / LiveTalking 这类后端，真人级口型")
-        print("  pet  —— 没有 GPU 时的小窗桌宠，会呼吸、眨眼、说话")
-        print("  auto —— 有 voice_backend 就 gpu，否则 pet")
-        print("")
-        print("  切换：dl mode gpu | dl mode pet | dl mode auto")
-        print("")
-        return
-    name = args.name.lower()
-    if name not in ("gpu", "web", "auto"):
-        print("  只有 gpu / pet / auto 三种。")
-        return
-    config.save({"mode": name})
-    print("  已切到 %s 模式。" % name)
+    cfg = config.load()
+    cfg.update(patch)
+    config.save(cfg)
 
 
 def cmd_model(args) -> None:
@@ -569,6 +615,14 @@ def main(argv: list[str] | None = None) -> None:
         print(USAGE)
         return
 
+    ALIASES = {
+        "rhythm": ("life", ["--rhythm"]),
+        "model": ("mode", []),
+    }
+    if argv and argv[0] in ALIASES:
+        target, extra = ALIASES[argv[0]]
+        argv = [target] + extra + argv[1:]
+
     ap = argparse.ArgumentParser(prog="suoling", description="数字生命初级 · 数字生命录入")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -617,6 +671,7 @@ def main(argv: list[str] | None = None) -> None:
 
     lf = sub.add_parser("life", help="看它的作息、在场、关系、心情、日子、日记")
     lf.add_argument("--id", default="")
+    lf.add_argument("--rhythm", action="store_true", help="只看作息")
     lf.set_defaults(func=cmd_life)
 
     rh = sub.add_parser("rhythm", help="看它此刻的作息状态")
