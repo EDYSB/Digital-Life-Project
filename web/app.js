@@ -2685,3 +2685,16 @@ function startCallMic() {
     rec.onend = function () { };
     try { rec.start(); } catch (e) { }
 }
+
+
+/* The status bar must not depend on which welcome variant is mounted. */
+function lifeBarBoot() {
+  if (typeof renderLifeBar === 'function') renderLifeBar();
+  setTimeout(function () { if (typeof renderLifeBar === 'function') renderLifeBar(); }, 1200);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', lifeBarBoot);
+} else {
+  lifeBarBoot();
+}
+window.addEventListener('load', lifeBarBoot);
