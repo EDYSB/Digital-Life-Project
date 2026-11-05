@@ -280,6 +280,21 @@ def cmd_brain(args) -> None:
     print("")
 
 
+def cmd_rhythm(args) -> None:
+    """Show the current daily state (derived from the clock)."""
+    from . import rhythm
+
+    st = rhythm.state()
+    bar = "█" * int(round(st["wakefulness"] * 20))
+    print("")
+    print("  现在：%s" % st["phase"])
+    print("  清醒度 %4.2f  %s" % (st["wakefulness"], bar))
+    print("  它大概会说：%s" % st["line"])
+    if st["should_rest"]:
+        print("  这个点它其实该睡了。")
+    print("")
+
+
 def cmd_create(args) -> None:
     """Hand-build a digital life (command line only)."""
     from . import create as create_mod
@@ -480,6 +495,9 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    rh = sub.add_parser("rhythm", help="看它此刻的作息状态")
+    rh.set_defaults(func=cmd_rhythm)
 
     cr = sub.add_parser("create", help="手工创造一个数字生命（仅命令行）")
     cr.add_argument("--name", default="")
