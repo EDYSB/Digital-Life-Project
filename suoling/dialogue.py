@@ -354,6 +354,23 @@ def build_state(profile: dict, history: list[dict]) -> dict:
     }
 
 
+
+def _recent(profile: dict) -> list:
+    mind = profile.setdefault("mind", {})
+    return mind.setdefault("recent", [])
+
+
+def _pick_fresh(rng, pool, state, recent, tries: int = 4) -> str:
+    """Pick a line that was not used in the last few turns."""
+    if not pool:
+        return ""
+    for _ in range(tries):
+        line = _pick(rng, pool, state)
+        if line and line not in recent:
+            return line
+    return _pick(rng, pool, state)
+
+
 def reply(profile: dict, message: str, history: list[dict] | None = None,
           mem_ctx: dict | None = None) -> dict:
     history = history or []
@@ -403,16 +420,20 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
     state = build_state(profile, history)
 
     seed = hashlib.sha256(("%s|%s|%d" % (profile.get("id", ""), message, len(history))).encode("utf-8")).hexdigest()
-    rng = random.Random(int(seed[:16], 16))
+    # Mix in how much has already been said, so asking the same thing
+    # twice does not produce the same sentence.
+    rng = random.Random(int(seed[:16], 16) + len(_recent(profile)) * 7919)
+
+    recent = _recent(profile)
 
     if intent == "empty":
         text = "……你先说，我在。"
     elif intent == "fallback" and any(ch in message for ch in ("?", "？", "吗", "呢")):
-        text = _pick(rng, QUESTION_FALLBACKS[voice], state)
+        text = _pick_fresh(rng, QUESTION_FALLBACKS[voice], state, recent)
     elif intent in REPLIES:
-        text = _pick(rng, REPLIES[intent][voice], state)
+        text = _pick_fresh(rng, REPLIES[intent][voice], state, recent)
     else:
-        text = _pick(rng, FALLBACKS[voice], state)
+        text = _pick_fresh(rng, FALLBACKS[voice], state, recent)
 
     # Memory: answer "do you remember" first, otherwise bring it up only
     # when the topic fits.
@@ -450,6 +471,9 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
             nxt = ""
     except Exception:  # noqa: BLE001
         life = None
+
+    recent.append(text)
+    del recent[:-12]
 
     return {
         "text": text,
