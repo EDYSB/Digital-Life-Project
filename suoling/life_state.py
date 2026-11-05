@@ -152,3 +152,56 @@ def summary(profile: dict, now: _dt.datetime | None = None) -> dict:
         "mood": ((profile.get("mind") or {}).get("mood") or {}),
         "journal": ((profile.get("mind") or {}).get("journal") or [])[-1:],
     }
+
+
+# ---------------------------------------------------------------- growth
+
+# Skills grow with accumulated turns, weighted by the matching trait.
+SKILLS = [
+    ("listening", "倾听", "empathy"),
+    ("noticing", "观察", "sensory"),
+    ("keeping", "记事", "order"),
+    ("talking", "说话", "creativity"),
+    ("steadying", "定心", "stability"),
+]
+
+
+def skills(profile: dict) -> list:
+    """Skill levels 0..5 derived from turns and traits; no separate storage."""
+    n = turns(profile)
+    traits = {t.get("key"): float(t.get("value") or 0) for t in (profile.get("traits") or [])}
+    out = []
+    for key, zh, trait in SKILLS:
+        base = min(5.0, (n / 120.0) * (0.6 + traits.get(trait, 0.5)))
+        out.append({"key": key, "name": zh, "level": round(base, 1)})
+    return out
+
+
+def journal_review(profile: dict, days: int = 7) -> dict:
+    """Look back at the recent entries instead of only appending new ones."""
+    entries = ((profile.get("mind") or {}).get("journal") or [])[-days:]
+    if not entries:
+        return {"days": 0, "line": "还没有写过日记。", "entries": []}
+    moods = [e.get("text", "") for e in entries]
+    return {
+        "days": len(entries),
+        "line": "最近 %d 天，记下了 %d 条。" % (len(entries), len(entries)),
+        "entries": entries,
+        "first": moods[0][:40] if moods else "",
+    }
+
+
+def letter(profile: dict, now=None) -> str:
+    """A short proactive note, written from state rather than a template."""
+    now = now or _dt.datetime.now()
+    st = rhythm.state(now)
+    d = summary(profile, now)
+    who = (profile.get("persona") or {}).get("name") or "我"
+    parts = []
+    parts.append("%s。%s" % (d["calendar"]["name"] + "了。" if d["calendar"].get("today") else st["line"], ""))
+    if d["presence"]["state"] in ("有一会儿了", "很久没见"):
+        parts.append("你%s没来。" % d["presence"]["gap"])
+    if d["stage"]["stage"] not in ("初次见面",):
+        parts.append("我们现在算%s。" % d["stage"]["stage"])
+    parts.append("我是%s。" % who)
+    return "".join(parts).strip()

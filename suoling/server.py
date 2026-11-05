@@ -231,6 +231,23 @@ class Handler(BaseHTTPRequestHandler):
                 snap["hit"] = (mems[-1].get("text") if mems else "") or ""
                 snap["name"] = (prof.get("persona") or {}).get("name") or ""
                 return self._send_json(snap)
+            if path == "/api/life":
+                qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                mid = (qs.get("id") or [""])[0]
+                prof = pipeline.load(mid) if mid else None
+                if prof is None:
+                    items = pipeline.list_minds()
+                    prof = pipeline.load(items[0]["id"]) if items else None
+                if prof is None:
+                    return self._send_error(HTTPStatus.NOT_FOUND, "还没有档案。")
+                from . import life_state
+
+                data = life_state.summary(prof)
+                data["skills"] = life_state.skills(prof)
+                data["review"] = life_state.journal_review(prof)
+                data["letter"] = life_state.letter(prof)
+                return self._send_json(data)
+
             return self._serve_static(path)
         except BrokenPipeError:
             return

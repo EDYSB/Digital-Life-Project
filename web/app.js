@@ -2221,6 +2221,30 @@ function setAvatar(src) {
   probe.src = src;
 }
 
+async function renderLifeBar() {
+  const bar = document.querySelector('#life-bar');
+  if (!bar) return;
+  let d = null;
+  try {
+    const r = await fetch('/api/life', { cache: 'no-store' });
+    if (r.ok) d = await r.json();
+  } catch (e) { d = null; }
+  const bits = [];
+  if (d) {
+    if (d.rhythm && d.rhythm.phase) bits.push('作息 <b>' + d.rhythm.phase + '</b>');
+    if (d.presence && d.presence.state) bits.push('在场 <b>' + d.presence.state + '</b>');
+    if (d.stage && d.stage.stage) bits.push('关系 <b>' + d.stage.stage + '</b>');
+    if (d.mood && d.mood.label) bits.push('心情 <b>' + d.mood.label + '</b>');
+    if (d.calendar && d.calendar.name) bits.push('日子 <b>' + d.calendar.name + '</b>');
+    if (d.skills && d.skills.length) {
+      const top = d.skills.slice().sort(function (a, b) { return b.level - a.level; })[0];
+      if (top) bits.push('最熟 <b>' + top.name + '</b>');
+    }
+  }
+  bar.innerHTML = bits.length ? bits.join('<i> · </i>') : '';
+  bar.classList.toggle('on', bits.length > 0);
+}
+
 function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
@@ -2274,6 +2298,8 @@ function idleIntent() {
         if (welcomePersona && welcomePersona.pulse) welcomePersona.pulse(1);
         idleIntent();
   randomAction();
+  renderLifeBar();
+  setInterval(renderLifeBar, 60000);
     }, 45000);
 }
 
