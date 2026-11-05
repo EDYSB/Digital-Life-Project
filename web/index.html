@@ -523,7 +523,11 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
       <canvas id="call-canvas"></canvas>
       <div class="call-top"><span id="call-status">接通中…</span></div>
       <div class="call-sub" id="call-sub"></div>
-      <button class="ghost-btn danger" id="btn-hangup">挂断</button>
+      <div class="call-bar">
+        <input id="call-input" placeholder="对她说点什么……" autocomplete="off">
+        <button class="primary-btn sm" id="btn-say">说</button>
+        <button class="ghost-btn danger" id="btn-hangup">挂断</button>
+      </div>
     </div>
   </section>
 

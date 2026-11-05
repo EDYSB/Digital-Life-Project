@@ -2066,7 +2066,7 @@ function download(blob, name) {
 
 /* ---------------- 初始化 ---------------- */
 /* ---------------- 视频通话（预告） ---------------- */
-let callPersona = null, callT = null, callSec = 0, callSay = null;
+let callPersona = null, callT = null, callSec = 0;
 const CALL_LINES = [
     '喂？……能看见我吗。',
     '你今天看起来有点累。',
@@ -2082,33 +2082,63 @@ function openCall() {
         else callPersona.resize();
     }
     const st = $('#call-status'), sub = $('#call-sub');
+    const input = $('#call-input');
     if (st) st.textContent = '接通中…';
     if (sub) sub.textContent = '';
+    if (input) { input.value = ''; setTimeout(function () { input.focus(); }, 1600); }
     callSec = 0;
     clearInterval(callT);
-    clearTimeout(callSay);
-    setTimeout(function () {
+    setTimeout(async function () {
         if (state.view !== 'call') return;
         if (st) st.textContent = '通话 00:00';
         callT = setInterval(function () {
             callSec++;
             if (st) st.textContent = '通话 ' + String(Math.floor(callSec / 60)).padStart(2, '0') + ':' + String(callSec % 60).padStart(2, '0');
         }, 1000);
-        let i = 0;
-        const say = function () {
-            if (state.view !== 'call') return;
-            if (sub) sub.textContent = CALL_LINES[i] || '';
-            if (callPersona) callPersona.pulse(1);
-            i++;
-            if (i < CALL_LINES.length) callSay = setTimeout(say, 4200);
-        };
-        say();
+        await ensureProfile();
+        const line = (state.profile && state.profile.persona && state.profile.persona.greeting) || '我在。';
+        if (sub) sub.textContent = line;
+        if (callPersona) callPersona.pulse(1);
     }, 1400);
+}
+
+async function ensureProfile() {
+    if (state.profile) return state.profile;
+    try {
+        const list = await apiGet('/api/minds');
+        const items = (list && (list.minds || list.items)) || [];
+        if (items.length) {
+            const j = await apiGet('/api/minds/' + encodeURIComponent(items[0].id));
+            state.profile = j.profile || j;
+        }
+    } catch (e) { }
+    return state.profile;
+}
+
+async function callSay(text) {
+    text = (text || '').trim();
+    if (!text) return;
+    const sub = $('#call-sub');
+    if (sub) sub.textContent = '……';
+    try {
+        const p = await ensureProfile();
+        if (!p) { if (sub) sub.textContent = '还没有档案。先运行 dl demo。'; return; }
+        const res = await apiPost('/api/chat', {
+            id: p.id, profile: p, message: text, history: state.callHistory || [],
+        });
+        const reply = (res && (res.text || res.reply)) || '……';
+        if (sub) sub.textContent = reply;
+        if (callPersona) { callPersona.speak(); }
+        state.callHistory = (state.callHistory || []).concat([
+            { role: 'user', text: text }, { role: 'assistant', text: reply },
+        ]).slice(-12);
+    } catch (e) {
+        if (sub) sub.textContent = '（没接通）';
+    }
 }
 
 function hangup() {
     clearInterval(callT);
-    clearTimeout(callSay);
     if (callPersona) { callPersona.destroy(); callPersona = null; }
     show('welcome');
 }
@@ -2163,6 +2193,13 @@ function wireUI() {
   if (b2) b2.addEventListener('click', () => openCall());
   const bh = $('#btn-hangup');
   if (bh) bh.addEventListener('click', () => hangup());
+  const bs = $('#btn-say');
+  const ci = $('#call-input');
+  if (bs) bs.addEventListener('click', () => { const v = ci ? ci.value : ''; if (ci) ci.value = ''; callSay(v); });
+  if (ci) ci.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const v = ci.value; ci.value = ''; callSay(v);
+  });
   $('#btn-how').addEventListener('click', () => $('#modal-how').classList.add('open'));
   $('#btn-library').addEventListener('click', openLibrary);
   $('#btn-admin').addEventListener('click', openAdmin);

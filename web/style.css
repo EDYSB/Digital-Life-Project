@@ -759,3 +759,7 @@ h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em}
 .call-sub{position:absolute;left:50%;bottom:132px;transform:translateX(-50%);width:min(720px,86vw);text-align:center;font-size:17px;line-height:1.9;color:#dfeef6;letter-spacing:.04em;min-height:64px}
 #btn-hangup{position:absolute;bottom:48px;left:50%;transform:translateX(-50%)}
 body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not(.dev) .step[data-step="2"]{display:none}
+
+.call-bar{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;width:min(680px,88vw)}
+.call-bar input{flex:1;height:40px;padding:0 14px;border:0;border-radius:2px;background:rgba(12,22,32,.9);color:#dfeef6;font-size:14px;outline:none}
+.call-bar input::placeholder{color:#5d7383}

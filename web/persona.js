@@ -67,6 +67,50 @@ class PersonaAvatar {
     c.fillStyle = bg;
     c.fillRect(0, 0, w, h);
 
+    /* 房间 + 夜景窗 */
+    const wx0 = w * 0.13, wx1 = w * 0.87, wy0 = h * 0.08, wy1 = h * 0.60;
+    const winG = c.createLinearGradient(0, wy0, 0, wy1);
+    winG.addColorStop(0, '#0b1d31');
+    winG.addColorStop(1, '#194566');
+    c.fillStyle = winG;
+    c.fillRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 24; i++) {
+      const bw = w * (0.02 + rnd() * 0.055);
+      const bx = wx0 + rnd() * (wx1 - wx0 - bw);
+      const bh = (wy1 - wy0) * (0.22 + rnd() * 0.62);
+      c.fillStyle = 'rgba(7,16,27,0.96)';
+      c.fillRect(bx, wy1 - bh, bw, bh);
+      c.fillStyle = 'rgba(130,205,255,0.30)';
+      for (let k = 0; k < 7; k++) {
+        if (rnd() > 0.5) c.fillRect(bx + 2, wy1 - bh + 5 + k * 7, 2, 2);
+      }
+    }
+    // 远处光晕
+    const glow = c.createRadialGradient(w * 0.30, wy1, 0, w * 0.30, wy1, w * 0.5);
+    glow.addColorStop(0, 'rgba(90,190,255,0.18)');
+    glow.addColorStop(1, 'rgba(90,190,255,0)');
+    c.fillStyle = glow;
+    c.fillRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+
+    // 窗框
+    c.strokeStyle = 'rgba(8,16,26,0.92)';
+    c.lineWidth = Math.max(4, w * 0.012);
+    c.strokeRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+    c.beginPath();
+    c.moveTo((wx0 + wx1) / 2, wy0);
+    c.lineTo((wx0 + wx1) / 2, wy1);
+    c.stroke();
+
+    // 地板反光
+    const fl = c.createLinearGradient(0, wy1, 0, h);
+    fl.addColorStop(0, 'rgba(40,95,140,0.32)');
+    fl.addColorStop(1, 'rgba(3,7,12,0)');
+    c.fillStyle = fl;
+    c.fillRect(0, wy1, w, h - wy1);
+
     /* 泡泡 */
     c.save();
     c.globalAlpha = 0.5;
