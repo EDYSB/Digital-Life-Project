@@ -1,9 +1,8 @@
 /* Live2D 挂载：失败一律返回 null，调用方回退到静态图 */
 (function () {
-  const MODEL = '/live2d/' + encodeURIComponent('大肥鱼.model3.json');
+  const MODEL = '/live2d/model.model3.json';
 
   async function mount(container, opts) {
-    return null;  // 开关：先关掉，等调试好再打开
     if (!window.PIXI || !PIXI.live2d) return null;
     const w = container.clientWidth || 300;
     const h = container.clientHeight || 380;
