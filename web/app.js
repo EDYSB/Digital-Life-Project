@@ -2129,6 +2129,8 @@ async function callSay(text) {
         const reply = (res && (res.text || res.reply)) || '……';
         if (sub) sub.textContent = reply;
         if (callPersona) { callPersona.speak(); }
+        try { speakText(reply); } catch (e) { }
+        setTimeout(function () { if (callPersona) callPersona.stopSpeaking(); }, 900 + reply.length * 180);
         state.callHistory = (state.callHistory || []).concat([
             { role: 'user', text: text }, { role: 'assistant', text: reply },
         ]).slice(-12);
@@ -2193,6 +2195,8 @@ function wireUI() {
   if (b2) b2.addEventListener('click', () => openCall());
   const bh = $('#btn-hangup');
   if (bh) bh.addEventListener('click', () => hangup());
+  const bm = $('#btn-mic-call');
+  if (bm) bm.addEventListener('click', () => startCallMic());
   const bs = $('#btn-say');
   const ci = $('#call-input');
   if (bs) bs.addEventListener('click', () => { const v = ci ? ci.value : ''; if (ci) ci.value = ''; callSay(v); });
@@ -2454,3 +2458,27 @@ async function init() {
 }
 
 init();
+
+
+/* 通话里的语音输入：浏览器支持就转文字，不支持就说明白 */
+function startCallMic() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const sub = $('#call-sub');
+    if (!SR) {
+        if (sub) sub.textContent = '这个浏览器没有语音识别，先打字吧。';
+        return;
+    }
+    const rec = new SR();
+    rec.lang = 'zh-CN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    if (sub) sub.textContent = '在听……';
+    if (callPersona) callPersona.pulse(0.6);
+    rec.onresult = function (e) {
+        const text = (e.results[0][0].transcript || '').trim();
+        if (text) callSay(text);
+    };
+    rec.onerror = function () { if (sub) sub.textContent = '没听清，再说一次？'; };
+    rec.onend = function () { };
+    try { rec.start(); } catch (e) { }
+}

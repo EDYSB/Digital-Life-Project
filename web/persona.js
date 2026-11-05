@@ -265,11 +265,19 @@ class PersonaAvatar {
     });
 
     /* 嘴 */
-    c.strokeStyle = '#c96b6b'; c.lineWidth = headR * 0.03; c.lineCap = 'round';
-    c.beginPath();
-    c.moveTo(cx - headR * 0.07, eyeY + headR * 0.46);
-    c.quadraticCurveTo(cx, eyeY + headR * 0.53, cx + headR * 0.07, eyeY + headR * 0.46);
-    c.stroke();
+    const mOpen = this.speaking ? (0.5 + 0.5 * Math.sin(this.t * 17)) * 0.9 : 0;
+    if (mOpen > 0.06) {
+      c.fillStyle = '#8c3b45';
+      c.beginPath();
+      c.ellipse(cx, eyeY + headR * 0.49, headR * 0.075, headR * (0.015 + 0.055 * mOpen), 0, 0, 7);
+      c.fill();
+    } else {
+      c.strokeStyle = '#c96b6b'; c.lineWidth = headR * 0.03; c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(cx - headR * 0.07, eyeY + headR * 0.46);
+      c.quadraticCurveTo(cx, eyeY + headR * 0.53, cx + headR * 0.07, eyeY + headR * 0.46);
+      c.stroke();
+    }
 
     /* 眼神光 */
     c.save();
