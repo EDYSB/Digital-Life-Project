@@ -32,7 +32,7 @@ const Mic = (() => {
   }
 
   function f0Of(buf, sampleRate) {
-    // 归一化自相关，取 70–400 Hz 的主峰
+    // Normalised autocorrelation; take the 70-400 Hz peak
     const minLag = Math.floor(sampleRate / 400);
     const maxLag = Math.floor(sampleRate / 70);
     let best = -1, bestLag = -1;

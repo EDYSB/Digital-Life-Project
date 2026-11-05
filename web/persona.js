@@ -1,4 +1,4 @@
-/* 数字生命 · DeepSeek 拟人形象（蓝鲸少女）
+/* Digital Life - the persona avatar (blue whale girl)
    纯 canvas 绘制：蓝发、青色眼睛、鲸鱼发夹。会呼吸、眨眼、说话时轻微点头。
    接口与 Avatar 兼容：setColor / setViews / setVector / speak / stopSpeaking / pulse / destroy。 */
 
@@ -64,7 +64,7 @@ class PersonaAvatar {
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     c.clearRect(0, 0, w, h);
 
-    /* 背景：深海 */
+    /* Background: deep sea */
     const bg = c.createLinearGradient(0, 0, 0, h);
     bg.addColorStop(0, '#071527');
     bg.addColorStop(0.55, '#0a1e33');
@@ -72,7 +72,7 @@ class PersonaAvatar {
     c.fillStyle = bg;
     c.fillRect(0, 0, w, h);
 
-    /* 房间 + 夜景窗 */
+    /* Room with a night window */
     const wx0 = w * 0.13, wx1 = w * 0.87, wy0 = h * 0.08, wy1 = h * 0.60;
     const winG = c.createLinearGradient(0, wy0, 0, wy1);
     winG.addColorStop(0, '#0b1d31');
@@ -93,14 +93,14 @@ class PersonaAvatar {
         if (rnd() > 0.5) c.fillRect(bx + 2, wy1 - bh + 5 + k * 7, 2, 2);
       }
     }
-    // 远处光晕
+    // distant glow
     const glow = c.createRadialGradient(w * 0.30, wy1, 0, w * 0.30, wy1, w * 0.5);
     glow.addColorStop(0, 'rgba(90,190,255,0.18)');
     glow.addColorStop(1, 'rgba(90,190,255,0)');
     c.fillStyle = glow;
     c.fillRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
 
-    // 窗框
+    // window frame
     c.strokeStyle = 'rgba(8,16,26,0.92)';
     c.lineWidth = Math.max(4, w * 0.012);
     c.strokeRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
@@ -109,14 +109,14 @@ class PersonaAvatar {
     c.lineTo((wx0 + wx1) / 2, wy1);
     c.stroke();
 
-    // 地板反光
+    // floor reflection
     const fl = c.createLinearGradient(0, wy1, 0, h);
     fl.addColorStop(0, 'rgba(40,95,140,0.32)');
     fl.addColorStop(1, 'rgba(3,7,12,0)');
     c.fillStyle = fl;
     c.fillRect(0, wy1, w, h - wy1);
 
-    /* 泡泡 */
+    /* Bubbles */
     c.save();
     c.globalAlpha = 0.5;
     for (const p of this.particles) {
@@ -129,7 +129,7 @@ class PersonaAvatar {
 
     const breathe = 1 + Math.sin(this.t * 1.2) * 0.008 + this.pulseV * 0.012;
 
-    /* 图片包：待机/伸手两帧，说话时切换；再不行退回单张立绘 */
+    /* Image pack: idle and reach frames, swapped while speaking; falls back to a still */
     const F = this.frames || {};
     if (F.idle && F.idle.complete && F.idle.naturalWidth) {
       const useReach = this.speaking && F.reach && F.reach.complete && F.reach.naturalWidth;
@@ -143,7 +143,7 @@ class PersonaAvatar {
       return;
     }
 
-    /* 有立绘就用立绘（呼吸 + 轻微浮动），没有就画代码版 */
+    /* Use the artwork when present (breathing + drift), otherwise draw the procedural one */
     if (this.art && this.art.complete && this.art.naturalWidth) {
       const ih = h * 0.94 * breathe;
       const iw = ih * (this.art.naturalWidth / this.art.naturalHeight);
@@ -161,7 +161,7 @@ class PersonaAvatar {
     c.scale(breathe, breathe);
     c.translate(-cx, -h * 0.55);
 
-    /* 肩膀：蓝色卫衣 */
+    /* Shoulders: blue hoodie */
     const bodyG = c.createLinearGradient(0, h * 0.68, 0, h);
     bodyG.addColorStop(0, '#1b6fd6');
     bodyG.addColorStop(1, '#0d3f86');
@@ -172,13 +172,13 @@ class PersonaAvatar {
     c.bezierCurveTo(cx + w * 0.14, h * 0.66, cx + w * 0.34, h * 0.70, cx + w * 0.46, h + 8);
     c.closePath();
     c.fill();
-    // 领口
+    // collar
     c.fillStyle = 'rgba(255,255,255,0.12)';
     c.beginPath();
     c.ellipse(cx, h * 0.675, headR * 0.62, headR * 0.18, 0, 0, 7);
     c.fill();
 
-    /* 后发 */
+    /* Back hair */
     const hairG = c.createLinearGradient(cx - headR, headY - headR, cx + headR, headY + headR);
     hairG.addColorStop(0, '#2f7fe0');
     hairG.addColorStop(0.5, '#4aa8f0');
@@ -188,7 +188,7 @@ class PersonaAvatar {
     c.ellipse(cx, headY + headR * 0.18, headR * 1.30, headR * 1.22, 0, 0, 7);
     c.fill();
 
-    /* 脸 */
+    /* Face */
     const faceG = c.createLinearGradient(cx, headY - headR, cx, headY + headR);
     faceG.addColorStop(0, '#ffe7d6');
     faceG.addColorStop(1, '#f6c8ac');
@@ -197,7 +197,7 @@ class PersonaAvatar {
     c.ellipse(cx, headY + headR * 0.06, headR * 0.92, headR * 0.95, 0, 0, 7);
     c.fill();
 
-    /* 刘海 */
+    /* Fringe */
     c.fillStyle = hairG;
     c.beginPath();
     c.moveTo(cx - headR * 0.96, headY + headR * 0.02);
@@ -208,7 +208,7 @@ class PersonaAvatar {
     c.closePath();
     c.fill();
 
-    /* 侧发 */
+    /* Side hair */
     c.beginPath();
     c.moveTo(cx - headR * 0.92, headY - headR * 0.05);
     c.bezierCurveTo(cx - headR * 1.20, headY + headR * 0.55, cx - headR * 1.02, headY + headR * 1.05, cx - headR * 0.74, headY + headR * 1.10);
@@ -222,7 +222,7 @@ class PersonaAvatar {
     c.closePath();
     c.fill();
 
-    /* 鲸鱼发夹 */
+    /* Whale hairpin */
     c.save();
     c.translate(cx + headR * 0.74, headY - headR * 0.72);
     c.rotate(-0.35);
@@ -240,7 +240,7 @@ class PersonaAvatar {
     c.beginPath(); c.arc(-headR * 0.07, 0, headR * 0.022, 0, 7); c.fill();
     c.restore();
 
-    /* 眼睛 */
+    /* Eyes */
     const eyeY = headY + headR * 0.10;
     const eyeDX = headR * 0.40;
     const open = 1 - this.blink;
@@ -251,25 +251,25 @@ class PersonaAvatar {
       if (open > 0.08) {
         c.save();
         c.scale(1, open);
-        // 眼白
+        // sclera
         c.fillStyle = '#ffffff';
         c.beginPath(); c.ellipse(0, 0, headR * 0.21, headR * 0.25, 0, 0, 7); c.fill();
-        // 虹膜
+        // iris
         const ir = c.createLinearGradient(0, -headR * 0.2, 0, headR * 0.2);
         ir.addColorStop(0, '#1f7fe0');
         ir.addColorStop(0.6, '#4fd0ff');
         ir.addColorStop(1, '#a8f0ff');
         c.fillStyle = ir;
         c.beginPath(); c.ellipse(0, headR * 0.02, headR * 0.15, headR * 0.20, 0, 0, 7); c.fill();
-        // 瞳孔
+        // pupil
         c.fillStyle = '#0a1830';
         c.beginPath(); c.ellipse(0, headR * 0.03, headR * 0.065, headR * 0.11, 0, 0, 7); c.fill();
-        // 高光
+        // highlight
         c.fillStyle = 'rgba(255,255,255,0.95)';
         c.beginPath(); c.arc(-headR * 0.055, -headR * 0.07, headR * 0.045, 0, 7); c.fill();
         c.beginPath(); c.arc(headR * 0.05, headR * 0.10, headR * 0.022, 0, 7); c.fill();
         c.restore();
-        // 上睫毛
+        // upper lash
         c.strokeStyle = '#12365c'; c.lineWidth = headR * 0.045; c.lineCap = 'round';
         c.beginPath();
         c.moveTo(-headR * 0.20, -headR * 0.12);
@@ -285,7 +285,7 @@ class PersonaAvatar {
       c.restore();
     });
 
-    /* 腮红 */
+    /* Blush */
     c.fillStyle = 'rgba(255,150,160,0.22)';
     [-1, 1].forEach(side => {
       c.beginPath();
@@ -293,7 +293,7 @@ class PersonaAvatar {
       c.fill();
     });
 
-    /* 嘴 */
+    /* Mouth */
     const mOpen = this.speaking ? (0.5 + 0.5 * Math.sin(this.t * 17)) * 0.9 : 0;
     if (mOpen > 0.06) {
       c.fillStyle = '#8c3b45';
@@ -308,7 +308,7 @@ class PersonaAvatar {
       c.stroke();
     }
 
-    /* 眼神光 */
+    /* Catchlight */
     c.save();
     c.globalCompositeOperation = 'lighter';
     const eg = c.createRadialGradient(cx, eyeY, 0, cx, eyeY, headR * 1.2);

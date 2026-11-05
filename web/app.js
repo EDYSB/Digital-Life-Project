@@ -2732,3 +2732,21 @@ document.addEventListener('error', function (e) {
   if (e.target && e.target.tagName === 'IMG') killBrokenImg(e.target);
 }, true);
 setInterval(function () { glyphGuard(); }, 2000);
+
+
+/* On opening the page, if there is something from an earlier day, say it. */
+async function renderCallback() {
+  try {
+    const r = await fetch('/api/life', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const line = d && d.letter ? d.letter : '';
+    if (!line) return;
+    const quoted = line.indexOf('「') >= 0;
+    if (!quoted) return;
+    const hit = line.split('「')[1].split('」')[0];
+    if (!hit) return;
+    if (typeof sayBubble === 'function') sayBubble('昨天你说「' + hit + '」，今天呢？', 6000);
+  } catch (e) { /* optional */ }
+}
+window.addEventListener('load', function () { setTimeout(renderCallback, 1800); });
