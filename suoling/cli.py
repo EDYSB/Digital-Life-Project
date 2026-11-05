@@ -557,6 +557,24 @@ def cmd_demo(args) -> None:
 
 
 def cmd_serve(args) -> None:
+    # A stale server on the same port silently serves old code. Say so instead.
+    import socket
+
+    probe = socket.socket()
+    probe.settimeout(0.4)
+    busy = probe.connect_ex(("127.0.0.1", args.port)) == 0
+    probe.close()
+    if busy:
+        print("")
+        print("  端口 %d 已被占用——很可能有一个旧的服务还在跑。" % args.port)
+        print("  它会把旧代码返回给你，看起来像改动没生效。")
+        print("")
+        print("  Windows 结束它：")
+        print("    netstat -ano | findstr :%d" % args.port)
+        print("    taskkill /PID <上面那个 PID> /F")
+        print("")
+        return
+
     from .server import serve
     serve(port=args.port, open_browser=not args.no_browser)
 
