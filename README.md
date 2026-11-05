@@ -75,7 +75,7 @@ python app.py
 
 浏览器会自动打开 <http://127.0.0.1:8017>。想先看一遍完整流程，命令行执行 `dl demo`：用内置样本跑完整条流水线（约 2 秒）并保存一份档案。
 
-Windows 用户也可以直接双击 `启动.bat`。
+Windows 用户也可以直接双击 `start.bat`。
 
 命令行（Windows 下 `dl.cmd` 已包好，等价于 `python -m suoling.cli`）：
 
@@ -109,7 +109,7 @@ dl export --id mind_xxxxxxxxxxxx --format md       导出档案
 
 > 自毁前请先关掉 `dl serve` 的窗口——那个进程会把内存里的档案重新写回磁盘。
 
-`dl.cmd` 与 `启动.bat` 内部只写纯 ASCII、CRLF 换行，所有中文提示都由 Python 打印。
+`dl.cmd` 与 `start.bat` 内部只写纯 ASCII、CRLF 换行，所有中文提示都由 Python 打印。
 不要用会把它们存成「UTF-8 + BOM」的编辑器重新保存——cmd.exe 按 GBK 读取批处理，
 BOM 和 UTF-8 中文会被解析成乱码，第一行命令也会失效。
 
@@ -271,7 +271,7 @@ BOM 和 UTF-8 中文会被解析成乱码，第一行命令也会失效。
 ```
 数字生命/
 ├── app.py                  启动器
-├── 启动.bat                Windows 一键启动
+├── start.bat                Windows 一键启动
 ├── suoling/
 │   ├── signal.py           FFT、Welch、频带、熵、Hurst、合成 EEG
 │   ├── eeg.py              CSV/JSON/EDF/NPZ/WAV 解析与预处理

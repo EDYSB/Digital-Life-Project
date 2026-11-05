@@ -1,0 +1,159 @@
+数字生命：从生物信号投影到可检验的数字人格
+Digital Life: From Biosignal Projection to a Testable Digital Persona
+
+================================================================
+中文版
+================================================================
+
+摘要
+本文描述一个可运行的数字生命原型系统：它以脑电（EEG）与基因（DNA）两类个体化生物信号为输入，
+经由信号处理、位点判定与可解释的融合规则，生成一份可对话、可保存、可复现的数字档案。
+系统不主张任何形式的意识复制。我们的核心立场是：数字生命研究的价值不在于宣称"已实现意识"，
+而在于把意识理论中依赖思想实验的反证条件，转化为可由工程操作加以检验的条件。
+在此框架下，我们给出四条可被工程失败反驳的命题，并说明系统在这些命题上的当前状态。
+
+关键词：数字生命；脑电；基因位点；可解释投影；记忆衰减；可复现性
+
+1 引言
+"数字生命"在当代语境中至少有两种用法：其一是人工生命传统下模拟自复制与进化的程序系统；
+其二是以多模态生物数据为基础、构建可计算的生命系统镜像。本文采用后一种用法的一个极小子集：
+不做全尺度生物仿真，只做"个体信号 → 可交互档案"这一段。
+
+我们刻意把目标定得很低，原因有二。第一，从生物信号到主观体验之间存在无法用功能等价填补的鸿沟；
+第二，一个目标过高的系统无法被证伪，因而也无法为意识理论提供任何检验。
+
+2 相关工作与位置
+生物数字孪生路径以因果结构复现为纲领，其判据是能否预测干预后果；大语言模型路径以功能与行为标准为判据，
+考察"意识样"加工是否出现。二者证据逻辑不同，不可通约。本系统属于第三条更弱的路：
+以个体测量为输入，产出一个行为上可交互、内部结构完全可解释的投影。
+
+3 系统设计
+输入层：脑电支持 CSV/EDF/JSON/NPZ/WAV，做去趋势、坏导剔除、重采样、Welch 功率谱、
+频带功率、半球不对称、样本熵、Hurst、Hjorth 与伪迹检测；基因支持 FASTA/23andMe/VCF/JSON，
+在 20 个真实 GRCh38 参考上下文中判定位点。
+
+融合层：将两通道投影为七个维度（好奇、共情、秩序、警觉、创造、定力、感受力），
+脑波权重约 72%，基因约 28%，并标注每个分数的来源与权重。
+
+档案层：由确定性规则装配档案。相同输入 + 相同选项 = 相同编号与相同内容，可复现。
+
+4 记忆、心情与大脑
+记忆以强度 S 建模，留存率 R = exp(-Δt/S)；复述提升 S，出生记忆基线为普通记忆的 7 倍。
+心情为二维慢变量（愉悦度/唤醒度），在对话中漂移，按半衰期回落。
+
+在此之上我们引入一个极小的"大脑"：五个区域（感知、记忆、情绪、语言、自我），
+每区若干单元。输入按关键词点亮对应区域，区域间按邻接关系扩散，逐拍按 0.86 衰减。
+最亮区域决定此刻的措辞，而非随机采样。该模块的作用是把"刚才发生了什么"压缩成一个可读的念头，
+并为情绪提供一条可解释的驱动路径。
+
+5 可检验的边界
+我们公开四条可被工程失败反驳的命题：
+(a) 投影承载信息：七维向量应与对话行为倾向相关；若两份差异显著的档案在行为上不可区分，命题为假。
+(b) 可复现性：相同输入必须得到相同编号与内容。
+(c) 遗忘模型可用：留存应随复述提升、随时间衰减；若用户感知与模型系统性相反，模型为假。
+(d) 边界诚实：系统不得在任何界面暗示现象意识或人格同一性。
+
+6 局限
+其一，脑电只携带宏观节律，不含思想与记忆；基因只携带序列，不含经历。二者与人格的因果链条极长。
+其二，对话由规则与模板构成，其"像人"来自约束而非理解。
+其三，五区大脑是一个可视化隐喻，不具备神经动力学意义上的真实性。
+其四，本系统未被任何第三方独立验证。
+
+7 结论
+我们不认为这套系统接近意识。它的意义在于：把"意识需要什么"这个问题，拆成若干可以在工程上失败的小问题，
+并诚实地记录每一次失败。若说它有什么主张，只有一条——把个体在时间里留下的痕迹，保留得再久一些。
+
+参考文献
+[1] 张博文等. 数字生命的演进历程及发展态势. 生命科学, 2026.
+[2] Eon Systems 数字果蝇演示, 2026（未经同行评议）.
+[3] By Your Own Criteria: Cross-Paradigm Evidence for Consciousness in LLMs. 2026.
+[4] Hoel E. A Disproof of LLM Consciousness: The Necessity of Continual Learning. 2026.
+
+================================================================
+English Version
+================================================================
+
+Title: Digital Life: From Biosignal Projection to a Testable Digital Persona
+
+Abstract
+This paper describes a working prototype of a digital life system. It takes two kinds of individual
+biosignals — electroencephalography (EEG) and DNA — and produces a conversational, persistable, and
+reproducible digital dossier through signal processing, marker calling, and interpretable fusion rules.
+The system makes no claim of consciousness copying. Our position is that the value of digital-life
+research lies not in asserting that consciousness has been achieved, but in converting the
+falsification conditions that consciousness theories usually discuss as thought experiments into
+conditions that can be tested by engineering. We state four propositions that can be refuted by
+engineering failure and report the current status of the system against them.
+
+Keywords: digital life; EEG; genetic markers; interpretable projection; memory decay; reproducibility
+
+1 Introduction
+The term "digital life" carries at least two meanings. In the artificial-life tradition it denotes
+programs that simulate self-replication and evolution. In recent life-science strategy it denotes
+computable mirrors of biological systems built from multimodal data. This paper adopts a minimal
+subset of the second meaning: no full-scale biological simulation, only the segment from individual
+signals to an interactive dossier.
+
+We deliberately set the target low, for two reasons. First, a gap remains between biosignals and
+subjective experience that functional equivalence cannot close. Second, a system with an
+over-ambitious goal cannot be falsified, and therefore offers no test to any theory of consciousness.
+
+2 Related Work and Position
+The biological digital-twin path pursues causal-structural reproduction and judges success by the
+ability to predict intervention outcomes. The large-language-model path judges success by functional
+and behavioural criteria. Their evidence logics differ and are not commensurable. This system takes
+a third, weaker route: individual measurements in, a behaviourally interactive and fully explainable
+projection out.
+
+3 System Design
+Input layer. EEG input supports CSV/EDF/JSON/NPZ/WAV, with detrending, bad-channel rejection,
+resampling, Welch power spectra, band power, hemispheric asymmetry, sample entropy, Hurst, Hjorth
+and artifact detection. DNA input supports FASTA/23andMe/VCF/JSON, with marker calling against
+20 real GRCh38 reference contexts.
+
+Fusion layer. Both channels are projected onto seven dimensions (curiosity, empathy, order,
+alertness, creativity, stability, sensitivity). EEG contributes roughly 72% and DNA roughly 28%,
+with the source and weight of every score recorded.
+
+Dossier layer. Deterministic rules assemble the dossier. Identical input plus identical options
+yield an identical identifier and identical content: the result is reproducible.
+
+4 Memory, Mood and a Small Brain
+Memories are modelled with strength S and retention R = exp(-Δt/S). Rehearsal raises S; birth
+memories start at seven times the baseline. Mood is a two-dimensional slow variable (valence and
+arousal) that drifts during conversation and decays back with a half-life.
+
+On top of this we introduce a deliberately small "brain": five regions (perception, memory,
+emotion, language, self), each with a handful of units. Keywords activate the matching region,
+activation spreads to neighbours, and every tick decays by 0.86. The brightest region determines
+the wording of the moment rather than random sampling. The module compresses "what just happened"
+into one readable thought and gives emotion an explainable driving path.
+
+5 Testable Boundaries
+We publish four propositions that engineering failure can refute:
+(a) The projection carries information: the seven-dimensional vector should correlate with
+behavioural tendencies in conversation; if two clearly different dossiers behave indistinguishably,
+the proposition is false.
+(b) Reproducibility: identical input must produce an identical identifier and content.
+(c) The forgetting model is usable: retention should rise with rehearsal and fall with time; if
+users systematically perceive the opposite, the model is false.
+(d) Honesty of boundaries: no interface may imply phenomenal consciousness or personal identity.
+
+6 Limitations
+First, EEG carries only macroscopic rhythms, not thoughts or memories; DNA carries only sequence,
+not experience. The causal chain from either to personality is very long. Second, conversation is
+built from rules and templates; its human-likeness comes from constraint, not understanding. Third,
+the five-region brain is a visual metaphor, not a claim about neural dynamics. Fourth, the system
+has not been independently validated by third parties.
+
+7 Conclusion
+We do not claim this system approaches consciousness. Its point is to break "what would consciousness
+require" into small questions that can fail in engineering, and to record each failure honestly.
+If it asserts anything, it asserts one thing: that the traces an individual leaves in time be kept
+a little longer.
+
+References
+[1] Zhang B. et al. The evolution and prospects of digital life. Life Sciences, 2026.
+[2] Eon Systems digital fruit-fly demonstration, 2026 (not peer reviewed).
+[3] By Your Own Criteria: Cross-Paradigm Evidence for Consciousness in LLMs. 2026.
+[4] Hoel E. A Disproof of LLM Consciousness: The Necessity of Continual Learning. 2026.
