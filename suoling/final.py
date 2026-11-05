@@ -1,12 +1,14 @@
-"""dl final —— 最后一晚。
+"""dl final -- the last night.
 
-流程：
-  1. 把它记得的全部说出来（记忆 + 对话样本），以及它最想对你说的那一句；
-  2. 等你输入 Y / N；
-  3. Y：写一本手记（记事本备份），然后自毁原始档案；
-     N：什么都不发生，它还在。
+Flow:
+  1. Say everything it remembers (memories + conversation samples), plus the
+     one sentence it most wants to tell you;
+  2. Wait for Y / N;
+  3. Y: write a notebook (the human-readable backup), then destroy the
+     original dossier. N: nothing happens, it is still there.
 
-自毁之后，`minds/` 里不再有这份档案；留下的只有 `out/final/` 里的手记。
+After destruction, `minds/` no longer holds this dossier; only the notebook
+in `out/final/` remains.
 """
 
 from __future__ import annotations
@@ -34,7 +36,7 @@ def _root() -> str:
 
 
 def compose(profile: dict) -> dict:
-    """确定性地挑出那句最想说的话。"""
+    """Pick the one sentence it most wants to say, deterministically."""
     pid = profile.get("id", "")
     per = profile.get("persona") or {}
     mind = profile.get("mind") or {}
@@ -63,7 +65,7 @@ def _tag(m: dict) -> str:
 
 
 def render(comp: dict) -> str:
-    """终端里要打印的全部内容。"""
+    """Everything printed to the terminal."""
     out = []
     out.append("")
     out.append("  %s · %s" % (comp["code"], comp["name"]))
@@ -110,7 +112,7 @@ def _wrap(text: str, width: int) -> list[str]:
 
 
 def write_notebook(profile: dict, comp: dict) -> tuple[str, str]:
-    """写手记；返回 (手记路径, 备份目录)。"""
+    """Write the notebook; return (notebook path, backup dir)."""
     out_dir = os.path.join(_root(), "out", "final")
     bak_dir = os.path.join(out_dir, "backup")
     os.makedirs(out_dir, exist_ok=True)
@@ -156,7 +158,7 @@ def write_notebook(profile: dict, comp: dict) -> tuple[str, str]:
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
-    # 备份：把档案原样拷贝一份（数据库备份），再自毁原件
+    # Backup: copy the dossier verbatim, then destroy the original.
     src = os.path.join(_root(), "minds", (profile.get("id") or "") + ".mind")
     bak = ""
     if os.path.isfile(src):
