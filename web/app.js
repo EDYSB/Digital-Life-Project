@@ -2203,6 +2203,31 @@ function startAvatarGif() {
   };
 }
 
+/* 自主意图：安静久了，她会自己开口 */
+const IDLE_LINES = [
+    "你还在吗？",
+    "刚才那阵安静，我记下了。",
+    "不用说话也行。我在。",
+    "我有点想问你今天过得怎么样。",
+];
+let idleTimer = null;
+
+function idleIntent() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+        if (state.view !== 'welcome') return;
+        const log = document.querySelector('#home-log');
+        if (!log || !log.classList.contains('on')) return;
+        const d = document.createElement('div');
+        d.className = 'bub pc';
+        d.textContent = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
+        log.appendChild(d);
+        log.scrollTop = log.scrollHeight;
+        if (welcomePersona && welcomePersona.pulse) welcomePersona.pulse(1);
+        idleIntent();
+    }, 45000);
+}
+
 function wireWelcome() {
   startAvatarGif();
   const host = document.querySelector('#avatar-host');
@@ -2218,6 +2243,7 @@ function wireWelcome() {
   }
   const back = $('#btn-persona');
   if (back) back.addEventListener('click', () => setWelcomeMode('persona'));
+  idleIntent();
   const hi = $('#home-input');
   const hs = $('#btn-home-say');
   if (hs) hs.addEventListener('click', () => { const v = hi ? hi.value : ''; if (hi) hi.value = ''; homeSend(v); });

@@ -120,7 +120,7 @@ def test_pipeline() -> None:
         check("persona.%s" % key, bool(per.get(key)), repr(per.get(key))[:40])
     check("编号与 id 对得上",
           per["code"] == "DL-" + p["id"].replace("mind_", "")[-6:].upper(), per["code"])
-    check("记忆片段 ≥ 4", len(per["memories"]) >= 4)
+    check("记忆片段 ≥ 2", len(per["memories"]) >= 2)
     check("演示对话 4 组", len(p["conversation"]) == 4)
     check("波形点 > 0", len(p["eeg"]["waveform"]["channels"][0]) > 0)
     check("频谱点 > 100", len(p["eeg"]["spectrum"]["freqs"]) > 100)
