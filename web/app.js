@@ -2065,9 +2065,54 @@ function download(blob, name) {
 }
 
 /* ---------------- 初始化 ---------------- */
+/* ---------------- 欢迎页：两种模式 ---------------- */
+let welcomePersona = null;
+
+function initWelcomePersona() {
+  const cv = $('#persona-canvas');
+  if (!cv || !window.PersonaAvatar) return;
+  if (!welcomePersona) welcomePersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
+  else welcomePersona.resize();
+}
+
+function setWelcomeMode(mode) {
+  const persona = $('#welcome-persona');
+  const classic = $('#welcome-classic');
+  if (!persona || !classic) return;
+  const isClassic = mode === 'classic';
+  persona.hidden = isClassic;
+  classic.hidden = !isClassic;
+  if (!isClassic) initWelcomePersona();
+  try { localStorage.setItem('dl_welcome_mode', mode); } catch (e) { }
+}
+
+function wireWelcome() {
+  const input = $('#persona-input');
+  if (input) {
+    input.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const v = input.value.trim().toLowerCase();
+      input.value = '';
+      if (v === 'dl' || v === 'dl home') setWelcomeMode('classic');
+    });
+  }
+  const back = $('#btn-persona');
+  if (back) back.addEventListener('click', () => setWelcomeMode('persona'));
+  let saved = 'persona';
+  try { saved = localStorage.getItem('dl_welcome_mode') || 'persona'; } catch (e) { }
+  setWelcomeMode(saved);
+  window.addEventListener('resize', function () {
+    const p = $('#welcome-persona');
+    if (p && !p.hidden) initWelcomePersona();
+  });
+}
+
 function wireUI() {
+  wireWelcome();
   $('#brand').addEventListener('click', () => show('welcome'));
   $('#btn-start').addEventListener('click', () => show('intake'));
+  const b2 = $('#btn-start2');
+  if (b2) b2.addEventListener('click', () => show('intake'));
   $('#btn-how').addEventListener('click', () => $('#modal-how').classList.add('open'));
   $('#btn-library').addEventListener('click', openLibrary);
   $('#btn-admin').addEventListener('click', openAdmin);

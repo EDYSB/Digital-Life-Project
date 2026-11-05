@@ -72,6 +72,17 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
 
   <!-- ============ 0. WELCOME ============ -->
   <section class="view active" id="view-welcome">
+    <div class="persona-stage" id="welcome-persona">
+      <canvas id="persona-canvas"></canvas>
+      <div class="persona-name">数字生命</div>
+      <div class="persona-line">Love，就是爱。解析到最后，只剩这一个词：爱自己，也爱别人。</div>
+      <button class="primary-btn big" id="btn-start2"><span>说点什么</span><i class="arrow">→</i></button>
+      <div class="persona-cmd">
+        <span>&gt;</span><input id="persona-input" placeholder="输入 dl 看另一种打开方式" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div id="welcome-classic" hidden>
     <div class="welcome-hero">
       <div class="hero-tag">DIGITAL LIFE · LEVEL 1 · 双通道录入</div>
       <h1>脑波 + 基因<br><span class="serif">→ 数字生命档案</span></h1>
@@ -119,6 +130,8 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
           所以你看到的"它"，是一份被认真写出来的<span class="em">投影</span>，不是被搬运的灵魂。
         </p>
       </div>
+    </div>
+    <div class="classic-back">输入 <code>dl</code> 回到她 · <button class="link-btn" id="btn-persona">← 回到她</button></div>
     </div>
   </section>
 

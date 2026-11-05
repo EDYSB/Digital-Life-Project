@@ -13,7 +13,19 @@ import time
 from . import agency as agency_mod, core as core_mod, world as world_mod, analysis, dialogue, eeg as eeg_mod, genome as genome_mod, memory as memory_mod, persona as persona_mod, signal as sig
 
 VERSION = "1.0.0"
-MIND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "minds")
+MIND_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "minds")
+
+
+def mind_dir() -> str:
+    """当前档案目录：登录了就用自己的，没登录就用公共目录。"""
+    try:
+        from . import lock
+        owner = lock.owner()
+    except Exception:
+        owner = ""
+    d = os.path.join(MIND_ROOT, owner) if owner else MIND_ROOT
+    os.makedirs(d, exist_ok=True)
+    return d
 
 
 class PipelineError(ValueError):
@@ -253,7 +265,7 @@ def build(
 
 
 def save(profile: dict, directory: str | None = None) -> str:
-    directory = directory or MIND_DIR
+    directory = directory or mind_dir()
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, profile["id"] + ".mind")
     data = dict(profile)
@@ -264,7 +276,7 @@ def save(profile: dict, directory: str | None = None) -> str:
 
 
 def load(mind_id: str, directory: str | None = None) -> dict:
-    directory = directory or MIND_DIR
+    directory = directory or mind_dir()
     if not re.fullmatch(r"mind_[0-9a-f]{6,32}", mind_id):
         raise PipelineError("非法的档案编号。")
     path = os.path.join(directory, mind_id + ".mind")
@@ -275,7 +287,7 @@ def load(mind_id: str, directory: str | None = None) -> dict:
 
 
 def list_minds(directory: str | None = None) -> list[dict]:
-    directory = directory or MIND_DIR
+    directory = directory or mind_dir()
     if not os.path.isdir(directory):
         return []
     out = []

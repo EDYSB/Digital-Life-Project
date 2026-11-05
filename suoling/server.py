@@ -348,7 +348,7 @@ class Handler(BaseHTTPRequestHandler):
                 mid = str(body.get("id", ""))
                 with _cache_lock:
                     _cache.pop(mid, None)
-                fp = os.path.join(pipeline.MIND_DIR, mid + ".mind")
+                fp = os.path.join(pipeline.mind_dir(), mid + ".mind")
                 if os.path.exists(fp):
                     os.remove(fp)
                 return self._send_json({"ok": True})
@@ -601,14 +601,14 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(host: str = "127.0.0.1", port: int = 8017, open_browser: bool = True) -> None:
-    os.makedirs(pipeline.MIND_DIR, exist_ok=True)
+    os.makedirs(pipeline.mind_dir(), exist_ok=True)
     httpd = ThreadingHTTPServer((host, port), Handler)
     url = "http://%s:%d" % (host, port)
     print("")
     print("  数字生命初级  ·  数字生命录入系统")
     print("  " + "-" * 44)
     print("  地址：%s" % url)
-    print("  档案目录：%s" % pipeline.MIND_DIR)
+    print("  档案目录：%s" % pipeline.mind_dir())
     print("  Ctrl+C 停止")
     print("")
     LIFE.start()

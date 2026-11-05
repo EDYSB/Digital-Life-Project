@@ -138,6 +138,67 @@ def cmd_chat(args) -> None:
         lines.append("**%s**：%s\n" % (per["name"], r["text"]))
 
 
+def cmd_account(args) -> None:
+    """建账户（可选）。不建也能用，只是档案在公共目录。"""
+    from . import lock
+    import getpass
+
+    if args.off:
+        lock.clear()
+        lock.set_current("")
+        print("  已取消账户。回到公共目录。")
+        return
+    if lock.users():
+        print("  已有账户：%s" % "、".join(lock.users()))
+    name = (args.user or "").strip() or input("  账户名：").strip()
+    if not name:
+        print("  没有名字，算了。")
+        return
+    pw = getpass.getpass("  口令：")
+    if not pw:
+        print("  没有口令，算了。")
+        return
+    if pw != getpass.getpass("  再来一次："):
+        print("  两次不一样。")
+        return
+    lock.add_user(name, pw)
+    lock.set_current(name)
+    print("  账户已建：%s。之后你的档案在 minds/%s/。" % (name, name))
+
+
+def cmd_login(args) -> None:
+    from . import lock
+    if not lock.has_accounts():
+        print("  还没有账户。要建一个吗？运行 dl account")
+        return
+    if args.user:
+        import getpass
+        if lock.verify(args.user, getpass.getpass("  口令：")):
+            lock.set_current(args.user)
+            print("  你好，%s。" % args.user)
+        else:
+            print("  不对。")
+        return
+    if lock.login():
+        pass
+
+
+def cmd_logout(args) -> None:
+    from . import lock
+    lock.set_current("")
+    print("  已退出。档案回到公共目录。")
+
+
+def cmd_whoami(args) -> None:
+    from . import lock
+    if not lock.has_accounts():
+        print("  没有账户体系：公共目录，谁都能看。")
+        return
+    who = lock.current_user()
+    print("  当前账户：%s" % (who or "（未登录，公共目录）"))
+    print("  档案目录：%s" % pipeline.mind_dir())
+
+
 def cmd_tui(args) -> None:
     from . import tui as tui_mod
     tui_mod.main(args.id or None)
@@ -297,6 +358,21 @@ def main(argv: list[str] | None = None) -> None:
     st = sub.add_parser("stats", help="后台：查看全部参数（前台不显示）")
     st.add_argument("--id", default="")
     st.set_defaults(func=cmd_stats)
+
+    ac = sub.add_parser("account", help="建账户（可选）：档案分到 minds/<账户>/")
+    ac.add_argument("--user", default="")
+    ac.add_argument("--off", action="store_true", help="取消账户，回到公共目录")
+    ac.set_defaults(func=cmd_account)
+
+    lg = sub.add_parser("login", help="登录到自己的目录")
+    lg.add_argument("--user", default="")
+    lg.set_defaults(func=cmd_login)
+
+    lo = sub.add_parser("logout", help="退出，回到公共目录")
+    lo.set_defaults(func=cmd_logout)
+
+    wh = sub.add_parser("whoami", help="看当前账户与档案目录")
+    wh.set_defaults(func=cmd_whoami)
 
     li = sub.add_parser("list", help="列出已保存档案")
     li.set_defaults(func=cmd_list)
