@@ -2148,11 +2148,18 @@ function hangup() {
 /* ---------------- 欢迎页：两种模式 ---------------- */
 let welcomePersona = null;
 
-function initWelcomePersona() {
-  const cv = $('#persona-canvas');
-  if (!cv || !window.PersonaAvatar) return;
+async function initWelcomePersona() {
+  const cv = document.querySelector('#persona-canvas');
+  if (!cv) return;
+  if (window.Live2DView && !welcomePersona) {
+    try {
+      const v = await window.Live2DView.mount(cv.parentElement, {});
+      if (v) { welcomePersona = v; return; }
+    } catch (e) { }
+  }
+  if (!window.PersonaAvatar) return;
   if (!welcomePersona) welcomePersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
-  else welcomePersona.resize();
+  else if (welcomePersona.resize) welcomePersona.resize();
 }
 
 function setWelcomeMode(mode) {
