@@ -138,6 +138,33 @@ def cmd_chat(args) -> None:
         lines.append("**%s**：%s\n" % (per["name"], r["text"]))
 
 
+def cmd_api(args) -> None:
+    """看或设置 API key：dl api sk-xxx / dl api --clear / dl api"""
+    from . import config
+
+    if args.clear:
+        config.save({"deepseek_api_key": ""})
+        print("  已清空 key。对话回到本地规则。")
+        return
+    key = (args.key or "").strip()
+    if key:
+        config.save({"deepseek_api_key": key})
+        print("  已写入 config.json：%s" % config.mask(key))
+        print("  模型 %s · 端点 %s" % (config.load().get("deepseek_model"), config.load().get("deepseek_base")))
+        return
+    cfg = config.load()
+    print("")
+    print("  DeepSeek")
+    print("  " + "─" * 40)
+    print("  key       %s" % config.mask(cfg.get("deepseek_api_key", "")))
+    print("  model     %s" % cfg.get("deepseek_model"))
+    print("  base      %s" % cfg.get("deepseek_base"))
+    print("  voice     %s" % (cfg.get("voice_backend") or "（未接后端）"))
+    print("")
+    print("  设置：dl api sk-xxxxx     清空：dl api --clear")
+    print("")
+
+
 def cmd_account(args) -> None:
     """建账户（可选）。不建也能用，只是档案在公共目录。"""
     from . import lock
@@ -358,6 +385,11 @@ def main(argv: list[str] | None = None) -> None:
     st = sub.add_parser("stats", help="后台：查看全部参数（前台不显示）")
     st.add_argument("--id", default="")
     st.set_defaults(func=cmd_stats)
+
+    ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
+    ap_.add_argument("key", nargs="?", default="")
+    ap_.add_argument("--clear", action="store_true", help="清空 key")
+    ap_.set_defaults(func=cmd_api)
 
     ac = sub.add_parser("account", help="建账户（可选）：档案分到 minds/<账户>/")
     ac.add_argument("--user", default="")

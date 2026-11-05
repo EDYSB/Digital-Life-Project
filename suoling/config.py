@@ -26,3 +26,21 @@ def load() -> dict:
 
 def deepseek_key() -> str:
     return (os.environ.get("DEEPSEEK_API_KEY") or load().get("deepseek_api_key") or "").strip()
+
+
+def save(patch: dict) -> dict:
+    data = load()
+    data.update(patch or {})
+    with open(_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    return data
+
+
+def mask(key: str) -> str:
+    key = key or ""
+    if not key:
+        return "（未设置）"
+    if len(key) <= 10:
+        return key[:2] + "****"
+    return key[:5] + "****" + key[-4:]
