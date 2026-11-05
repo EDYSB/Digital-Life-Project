@@ -154,16 +154,11 @@ def cmd_mode(args) -> None:
         print("")
         return
     name = args.name.lower()
-    if name not in ("gpu", "pet", "auto"):
+    if name not in ("gpu", "web", "auto"):
         print("  只有 gpu / pet / auto 三种。")
         return
     config.save({"mode": name})
     print("  已切到 %s 模式。" % name)
-
-
-def cmd_pet(args) -> None:
-    from . import pet as pet_mod
-    pet_mod.main(1200 if args.test else None)
 
 
 def cmd_api(args) -> None:
@@ -417,10 +412,6 @@ def main(argv: list[str] | None = None) -> None:
     md = sub.add_parser("mode", help="gpu / pet / auto")
     md.add_argument("name", nargs="?", default="")
     md.set_defaults(func=cmd_mode)
-
-    pe = sub.add_parser("pet", help="桌宠模式（无 GPU）")
-    pe.add_argument("--test", action="store_true", help="1.2 秒后自动关闭")
-    pe.set_defaults(func=cmd_pet)
 
     ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
     ap_.add_argument("key", nargs="?", default="")
