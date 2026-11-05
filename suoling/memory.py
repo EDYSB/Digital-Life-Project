@@ -388,6 +388,15 @@ def observe(profile: dict, message: str, reply_text: str = "", intent: str = "",
     stats["messages"] = int(stats.get("messages", 0)) + 1
     stats["last_seen"] = _iso(now)
     try:
+        from . import records
+
+        mid = str(profile.get("id", ""))
+        records.add_turn(mid, "me", message, intent)
+        if reply_text:
+            records.add_turn(mid, "her", reply_text, intent)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
         from . import life_state
 
         life_state.touch(profile, now)

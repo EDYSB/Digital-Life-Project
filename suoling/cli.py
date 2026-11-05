@@ -280,6 +280,37 @@ def cmd_brain(args) -> None:
     print("")
 
 
+def cmd_journal(args) -> None:
+    """Read the ledger: what was said, day by day."""
+    from . import pipeline, records
+
+    items = pipeline.list_minds()
+    if not items:
+        print("还没有档案。先运行：dl demo")
+        return
+    profile = pipeline.load(args.id) if args.id else pipeline.load(items[0]["id"])
+    mid = str(profile.get("id", ""))
+
+    print("")
+    print("  %s 的记录" % ((profile.get("persona") or {}).get("name") or "它"))
+    print("  " + "─" * 44)
+    ds = records.days(mid, args.days)
+    if not ds:
+        print("  还没有记录。")
+        print("")
+        return
+    for d in ds:
+        print("  %s  %d 句" % (d["day"], d["turns"]))
+        text = records.digest(mid, d["day"])
+        if text:
+            print("    %s" % text)
+    print("")
+    for row in records.recent(mid, args.last):
+        who = "你" if row["role"] == "me" else "她"
+        print("  %s  %s：%s" % (row["at"][11:16], who, row["text"][:40].replace("\n", " ")))
+    print("")
+
+
 def cmd_life(args) -> None:
     """One view of everything that makes it feel alive."""
     from . import life_state, pipeline
@@ -525,6 +556,12 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    jr = sub.add_parser("journal", help="读记录：每天说了多少、最近说了什么")
+    jr.add_argument("--id", default="")
+    jr.add_argument("--days", type=int, default=7)
+    jr.add_argument("--last", type=int, default=10)
+    jr.set_defaults(func=cmd_journal)
 
     lf = sub.add_parser("life", help="看它的作息、在场、关系、心情、日子、日记")
     lf.add_argument("--id", default="")
