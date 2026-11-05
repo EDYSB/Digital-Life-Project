@@ -32,6 +32,7 @@ USAGE = """数字生命初级 · 命令行
   dl chat --id 编号           与已保存的档案对话
   dl tui [--id 编号]          在终端里开一个独立界面（不依赖浏览器）
   dl final [--id 编号]        说出最后一句；Y 确认后写手记并自毁档案
+  dl stats [--id 编号]        后台：查看全部参数（前台不显示）
   dl card --id 编号 [--out 文件] [--no-open]
                               生成可打印的数字生命卡
   dl export --id 编号 [--format md|json]
@@ -140,6 +141,42 @@ def cmd_chat(args) -> None:
 def cmd_tui(args) -> None:
     from . import tui as tui_mod
     tui_mod.main(args.id or None)
+
+
+def cmd_stats(args) -> None:
+    """后台：参数只在这里看。"""
+    items = pipeline.list_minds()
+    if not items:
+        print("还没有档案。先运行：dl demo")
+        return
+    profile = pipeline.load(args.id) if args.id else pipeline.load(items[0]["id"])
+    per = profile.get("persona") or {}
+    eeg = profile.get("eeg") or {}
+    dna = profile.get("dna") or {}
+    mind = profile.get("mind") or {}
+    stats = mind.get("stats") or {}
+    cov = dna.get("coverage") or {}
+    q = eeg.get("quality") or {}
+    print("")
+    print("  后台 · %s" % (per.get("code") or profile.get("id")))
+    print("  " + "─" * 46)
+    print("  编号      %s" % profile.get("id"))
+    print("  名称      %s" % (per.get("name") or "—"))
+    print("  脑波      %d 导联 · %.1f 秒 · 主频 %s Hz · 采样 %s Hz"
+          % (eeg.get("n_channels", 0), float(eeg.get("seconds", 0)),
+             eeg.get("peak_hz", "—"), eeg.get("fs", "—")))
+    print("  质量      %.0f%% · 眨眼 %s 次 · 削顶 %.2f%% · 工频 %.4f"
+          % (float(q.get("score", 0)) * 100, q.get("blinks", 0),
+             float(q.get("clipped_ratio", 0)) * 100, float(q.get("line_noise", 0))))
+    print("  基因      %d / %d 位点 · 置信度 %.0f%%"
+          % (cov.get("markers_hit", 0), cov.get("markers_total", 0),
+             float(dna.get("confidence", 0)) * 100))
+    print("  来源      %s / %s" % ((profile.get("origin") or {}).get("eeg_source", "—"),
+                                    (profile.get("origin") or {}).get("dna_source", "—")))
+    print("  会话/消息 %s / %s" % (stats.get("sessions", 0), stats.get("messages", 0)))
+    print("  记忆      %d 条" % len(mind.get("memories") or []))
+    print("  心情      %s" % (eeg.get("mood") or "—"))
+    print("")
 
 
 def cmd_final(args) -> None:
@@ -253,6 +290,10 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    st = sub.add_parser("stats", help="后台：查看全部参数（前台不显示）")
+    st.add_argument("--id", default="")
+    st.set_defaults(func=cmd_stats)
 
     li = sub.add_parser("list", help="列出已保存档案")
     li.set_defaults(func=cmd_list)

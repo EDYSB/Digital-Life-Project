@@ -1047,15 +1047,15 @@ function renderDossier(p) {
     '说话方式 · ' + per.voice_label,
     '状态 · ' + (p.eeg.mood || per.mood),
     '维度 · ' + p.traits.slice().sort((a, b) => b.value - a.value).slice(0, 3).map(t => t.name).join(' / '),
-    '脑波 ' + Math.round(p.eeg.seconds) + 's',
-    '基因 ' + p.dna.coverage.markers_hit + '/' + p.dna.coverage.markers_total,
   ];
   $('#d-chips').innerHTML = chips.map(c => `<span class="tag">${esc(c)}</span>`).join('');
-  const org = per.origin || {};
-  $('#d-origin').innerHTML = [
-    `EEG · ${esc(p.origin.eeg_source || '—')} · ${p.eeg.n_channels} 导联 · ${p.eeg.fs} Hz · 质量 ${(p.eeg.quality.score * 100).toFixed(0)}%`,
-    `DNA · ${esc(p.origin.dna_source || '—')} · ${p.dna.kind.toUpperCase()} · GC ${p.dna.stats.gc_percent == null ? '—' : p.dna.stats.gc_percent + '%'} · 可信度 ${(p.dna.confidence * 100).toFixed(0)}%`,
-  ].join('<br>');
+  // 参数一律不上前台，只在 `dl stats` / 后台页出现
+  const orgEl = $('#d-origin');
+  if (orgEl) { orgEl.innerHTML = ''; orgEl.style.display = 'none'; }
+  ['#signal-stats', '#dna-foot', '#fusion-foot', '#life-status'].forEach(function (sel) {
+    const el = $(sel);
+    if (el) el.style.display = 'none';
+  });
 
   const status = $('#life-status');
   if (status) {

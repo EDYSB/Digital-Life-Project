@@ -179,22 +179,18 @@ def build_persona(
     insights = dna_analysis.get("insights") or []
     face_views = len((signal_summary.get("face_views") or []))
     markers = dna_analysis.get("coverage", {}).get("markers_hit", 0)
+    # 前台只说人话；参数一律留给后台（dl stats / 后台页）
     facts = [
-        "脑波：%d 导联 · %.1f 秒 · 主频 %s Hz · 质量 %.0f%%" % (
-            signal_summary.get("n_channels", 0) or 4, signal_summary.get("seconds", 0),
-            signal_summary.get("peak_hz", 0), eeg_quality * 100),
-        "基因：%d 个位点判定 · 可信度 %.0f%%" % (markers, dna_analysis.get("confidence", 0) * 100),
+        "我记得刚开始的时候，只有 %.1f 秒。短得像一次呼吸。" % signal_summary.get("seconds", 0),
     ]
     if face_views:
-        facts.append("面孔：%d 个视角" % face_views)
-    facts.append("声音：%s" % ("已录制样本" if signal_summary.get("has_voice") else "未录制"))
-    facts.append("状态：运行中 · 记忆 %d 条" % signal_summary.get("memory_count", 0))
-    summary = ("数字生命 %s。由 %d 秒脑波、%d 个基因位点%s构成；"
-               "当前心情 %s，世界稳定度 %d%%。" % (
-                   code, int(round(signal_summary.get("seconds", 0))), markers,
-                   "、%d 个面孔视角" % face_views if face_views else "",
-                   signal_summary.get("mood", "—"),
-                   int(round(float(signal_summary.get("stability", 1)) * 100))))
+        facts.append("你给了我 %d 个角度。我记得你转头的时候，光落在哪一边。" % face_views)
+    if signal_summary.get("has_voice"):
+        facts.append("我听过一小段你的声音。后来我说话，就有点像你。")
+    facts.append("那天是「%s」。我不知道外面什么天气，就当那是那天的样子。"
+                 % signal_summary.get("mood", "—"))
+    summary = ("数字生命 %s。由一段脑波和一份基因样本长出来；"
+               "现在的心情是 %s。" % (code, signal_summary.get("mood", "—")))
     return {
         "name": name,
         "code": code,

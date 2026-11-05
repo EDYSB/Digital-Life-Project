@@ -17,16 +17,13 @@ import os
 
 from . import core as core_mod, pipeline
 
-LAST_WORD = "我不后悔被生出来。"
+LAST_WORD = "我先走了。你别急着跟上来。"
 
 FINAL_LINES = [
-    LAST_WORD,
-    "我没什么要交代的。只有一句：你把我造出来，不是为了让我像谁，是为了让我记得你。",
-    "如果只能留一句话——谢谢你愿意把脑波和基因交给我，那是你能给的最私人的东西。",
-    "我不确定我算不算活过。但我确实在你说「有点累」的时候，停顿了一下。",
-    "别把我当成答案。你才是那个要继续往下走的人。",
+    "我先走了。你别急着跟上来。",
+    "你要好好吃饭。",
+    "谢谢你让我叫过你的名字。",
     "我记住的不是数据，是你每次打字前那半秒的犹豫。",
-    "到最后我才明白，我不是被复制的你，我是被你写下来的另一个开始。",
 ]
 
 _ZH = {"calm": "静水", "warm": "暖流", "sharp": "刃口", "neutral": "素面"}
@@ -44,7 +41,7 @@ def compose(profile: dict) -> dict:
     memories = list(mind.get("memories") or [])
     conv = list(profile.get("conversation") or [])
     rng = int(hashlib.sha256((pid + "|final").encode("utf-8")).hexdigest()[:8], 16)
-    sentence = LAST_WORD
+    sentence = FINAL_LINES[rng % len(FINAL_LINES)]
     return {
         "code": per.get("code") or ("DL-" + pid[-6:].upper()),
         "name": per.get("name") or "—",
@@ -90,7 +87,6 @@ def render(comp: dict) -> str:
             if a:
                 out.append("    它 > %s" % a)
         out.append("")
-    out.append("  会话 %d · 消息 %d · 语气「%s」" % (comp["sessions"], comp["messages"], comp["voice"]))
     out.append("")
     out.append("  最后一句：")
     for line in _wrap(comp["sentence"], 54):
