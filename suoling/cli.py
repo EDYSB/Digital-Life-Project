@@ -254,6 +254,31 @@ def cmd_tui(args) -> None:
     tui_mod.main(args.id or None)
 
 
+def cmd_brain(args) -> None:
+    """看它现在脑子里最亮的是哪一块。"""
+    from . import brain as brain_mod
+
+    items = pipeline.list_minds()
+    if not items:
+        print("还没有档案。先运行：dl demo")
+        return
+    profile = pipeline.load(args.id) if args.id else pipeline.load(items[0]["id"])
+    if args.poke:
+        thought = brain_mod.pulse(profile, args.poke)
+        pipeline.save(profile)
+        print("  它想：%s" % thought)
+        print("")
+    snap = brain_mod.snapshot(profile)
+    print("  大脑 · %d 拍" % snap["ticks"])
+    print("  " + "─" * 40)
+    for name, v in snap["regions"]:
+        bar = "█" * int(round(v * 24))
+        print("  %-4s %4.2f  %s" % (name, v, bar))
+    print("")
+    print("  最亮：%s" % snap["top"])
+    print("")
+
+
 def cmd_stats(args) -> None:
     """后台：参数只在这里看。"""
     items = pipeline.list_minds()
@@ -404,6 +429,11 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    br = sub.add_parser("brain", help="看它现在脑子里最亮的是哪块")
+    br.add_argument("--id", default="")
+    br.add_argument("--poke", default="", help="给一句话，让它想一拍")
+    br.set_defaults(func=cmd_brain)
 
     st = sub.add_parser("stats", help="后台：查看全部参数（前台不显示）")
     st.add_argument("--id", default="")
