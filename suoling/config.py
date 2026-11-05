@@ -9,6 +9,8 @@ _DEFAULT = {
     "deepseek_api_key": "",
     "deepseek_base": "https://api.deepseek.com",
     "deepseek_model": "deepseek-chat",
+    "voice_backend": "",
+    "voice_ws": "",
 }
 
 
