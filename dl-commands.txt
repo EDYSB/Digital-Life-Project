@@ -28,7 +28,7 @@ Digital Life L1 · Command Reference
   dl serve                    启动本地网页界面
   dl api [KEY]                查看或设置 API key
   dl account / login / logout 可选的多账户
-  dl mode [gpu|web|auto]      运行模式
+  dl mode gpu|web|auto      运行模式
 
 --------------------------------------------------
 二、生成档案
@@ -187,7 +187,7 @@ dl create [--name 名字] [--voice calm|warm|sharp|neutral] [--traits 好奇=70,
   手工创造一个数字生命：不传脑电与基因，七维数值自己定，0-100。
   同样参数 = 同样编号，可复现。只支持命令行，网页不能创建。
 
-dl model [api|ollama|rules|auto]
+dl mode api|ollama|rules|auto
   选择后端，可随时切换：
     api     只用 DeepSeek（需要 key）
     ollama  只用本机模型（自动从 /api/tags 选已装的）

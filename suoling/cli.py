@@ -53,8 +53,6 @@ USAGE = """数字生命初级 · 命令行
     dl account / login / logout  可选账户
     dl whoami                    当前身份与档案目录
 
-  旧名仍可用：dl rhythm → dl life，dl model → dl mode
-
 示例
   dl scan --eeg samples/eeg_meditation.csv --dna samples/dna_sensitive.fasta --name 我
   dl life
@@ -205,35 +203,6 @@ def _save(patch: dict) -> None:
     cfg = config.load()
     cfg.update(patch)
     config.save(cfg)
-
-
-def cmd_model(args) -> None:
-    """Choose which backend answers: api / ollama / rules / auto."""
-    from . import config, llm
-
-    cur = config.load()
-    if args.set:
-        want = args.set.lower()
-        if want not in ("api", "ollama", "rules", "auto"):
-            print("  只能选 api / ollama / rules / auto")
-            return
-        cur["llm_mode"] = want
-        config.save(cur)
-        llm.detect(force=True)
-        print("  已切到：%s" % want)
-
-    info = llm.detect(force=True)
-    print("")
-    print("  当前模式：%s" % (config.load().get("llm_mode") or "auto"))
-    print("  实际使用：%s" % (info["note"] or "—"))
-    if info["kind"] != "none":
-        print("  模型：%s" % info["model"])
-    print("")
-    print("  api     只用 DeepSeek（需要 key）")
-    print("  ollama  只用本机模型（自动选已装的）")
-    print("  rules   强制规则对话，不联网")
-    print("  auto    有 key 用 api，否则找本机模型")
-    print("")
 
 
 def cmd_api_test(args) -> None:
@@ -439,21 +408,6 @@ def cmd_life(args) -> None:
     print("")
 
 
-def cmd_rhythm(args) -> None:
-    """Show the current daily state (derived from the clock)."""
-    from . import rhythm
-
-    st = rhythm.state()
-    bar = "█" * int(round(st["wakefulness"] * 20))
-    print("")
-    print("  现在：%s" % st["phase"])
-    print("  清醒度 %4.2f  %s" % (st["wakefulness"], bar))
-    print("  它大概会说：%s" % st["line"])
-    if st["should_rest"]:
-        print("  这个点它其实该睡了。")
-    print("")
-
-
 def cmd_create(args) -> None:
     """Hand-build a digital life (command line only)."""
     from . import create as create_mod
@@ -615,14 +569,6 @@ def main(argv: list[str] | None = None) -> None:
         print(USAGE)
         return
 
-    ALIASES = {
-        "rhythm": ("life", ["--rhythm"]),
-        "model": ("mode", []),
-    }
-    if argv and argv[0] in ALIASES:
-        target, extra = ALIASES[argv[0]]
-        argv = [target] + extra + argv[1:]
-
     ap = argparse.ArgumentParser(prog="suoling", description="数字生命初级 · 数字生命录入")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -671,11 +617,8 @@ def main(argv: list[str] | None = None) -> None:
 
     lf = sub.add_parser("life", help="看它的作息、在场、关系、心情、日子、日记")
     lf.add_argument("--id", default="")
-    lf.add_argument("--rhythm", action="store_true", help="只看作息")
     lf.set_defaults(func=cmd_life)
 
-    rh = sub.add_parser("rhythm", help="看它此刻的作息状态")
-    rh.set_defaults(func=cmd_rhythm)
 
     cr = sub.add_parser("create", help="手工创造一个数字生命（仅命令行）")
     cr.add_argument("--name", default="")
@@ -699,9 +642,6 @@ def main(argv: list[str] | None = None) -> None:
     md.add_argument("name", nargs="?", default="")
     md.set_defaults(func=cmd_mode)
 
-    md = sub.add_parser("model", help="选择后端：api / ollama / rules / auto")
-    md.add_argument("set", nargs="?", default="")
-    md.set_defaults(func=cmd_model)
 
     ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
     ap_.add_argument("key", nargs="?", default="")
