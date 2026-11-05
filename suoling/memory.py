@@ -1,4 +1,4 @@
-"""记忆与心情：艾宾浩斯遗忘曲线、情景记忆召回、心情漂移。
+"""Memory and mood: Ebbinghaus forgetting curve, episodic recall, mood drift.
 
 设计原则
 --------
@@ -20,7 +20,7 @@ import re
 
 from . import signal as sig
 
-# ---------------------------------------------------------------- 基础
+# ---------------------------------------------------------------- basics
 STOP_BIGRAMS = {
     "我们", "你们", "他们", "自己", "这个", "那个", "什么", "怎么", "因为", "所以",
     "但是", "如果", "就是", "可以", "没有", "知道", "觉得", "感觉", "现在", "时候",
@@ -74,7 +74,7 @@ def _days_between(a: datetime.datetime | None, b: datetime.datetime) -> float:
     return max(0.0, (b - a).total_seconds() / 86400.0)
 
 
-# ---------------------------------------------------------------- 记忆条目
+# ---------------------------------------------------------------- memory items
 def bigrams(text: str) -> set[str]:
     s = re.sub(r"[^\u4e00-\u9fffA-Za-z0-9]", "", text or "")
     grams = set()
@@ -95,7 +95,8 @@ def _overlap(a: set[str], b: set[str]) -> float:
 
 
 def stability(mem: dict) -> float:
-    """记忆强度 S（天）。出生记忆与高情绪记忆更耐久，复述会显著延长。"""
+    """Memory strength S in days. Birth and high-emotion memories last longer;
+    rehearsal extends S noticeably."""
     base = 7.0 if (mem.get("source") == "birth" or mem.get("pinned")) else 1.0
     rehearsals = int(mem.get("rehearsals", 0))
     s = base * (1.0 + 0.75 * rehearsals) * (1.0 + 0.9 * abs(float(mem.get("valence", 0))))
@@ -103,7 +104,7 @@ def stability(mem: dict) -> float:
 
 
 def retention(mem: dict, now: datetime.datetime | None = None) -> float:
-    """艾宾浩斯遗忘曲线：R = exp(-Δt / S)，S 随复述与情绪强度增长。"""
+    """Ebbinghaus curve: R = exp(-dt / S); S grows with rehearsal and emotion."""
     now = now or _now()
     last = _parse(mem.get("last")) or _parse(mem.get("created")) or now
     dt = _days_between(last, now)
@@ -122,7 +123,8 @@ def _clean_clause(text: str) -> str:
 
 
 def extract(message: str) -> list[dict]:
-    """从一句话里提取"值得记住"的片段（规则驱动，不假装理解）。"""
+    """Extract "worth remembering" fragments from a sentence. Rule-driven;
+    it does not pretend to understand anything."""
     msg = _clean_clause(message)
     if len(msg) < 4 or msg.endswith(("吗", "呢", "？", "?")):
         return []
@@ -133,13 +135,13 @@ def extract(message: str) -> list[dict]:
             frag = _clean_clause(m.group(0))
             if len(frag) >= 4:
                 found.append({"text": frag, "kind": kind})
-    # 情绪陈述也记，但归为 emotion
+    # Emotional statements are kept too, but tagged as emotion.
     for w, v in EMOTION_WORDS.items():
         if w in msg and len(msg) >= 5:
             kind = "emotion" if abs(v) >= 0.6 else "feeling"
             found.append({"text": msg, "kind": kind, "valence": v})
             break
-    # 去掉包含关系里的重复
+    # Drop duplicates where one fragment contains another.
     uniq = []
     for f in found:
         if not any(f["text"] in u["text"] and f["text"] != u["text"] for u in found):
@@ -155,7 +157,7 @@ def _merge(profile: dict, cand: dict, now: datetime.datetime) -> dict:
         if mem.get("faded"):
             continue
         if _overlap(grams, set(mem.get("keywords", []))) >= 0.62:
-            # 同一件事又提了一次：复述强化，更新措辞
+            # The same thing came up again: reinforce and refresh the wording.
             mem["rehearsals"] = int(mem.get("rehearsals", 0)) + 1
             mem["last"] = _iso(now)
             mem["text"] = cand["text"]
@@ -181,7 +183,8 @@ def _merge(profile: dict, cand: dict, now: datetime.datetime) -> dict:
 
 
 def decay(profile: dict, now: datetime.datetime | None = None) -> dict:
-    """推进一步遗忘：更新每条记忆的留存率，标记长期未被想起的为"模糊"。"""
+    """Advance forgetting by one step: update retention and mark long-unused
+    memories as faded."""
     now = now or _now()
     mind = profile.setdefault("mind", {})
     memories = mind.setdefault("memories", [])
@@ -200,7 +203,7 @@ def decay(profile: dict, now: datetime.datetime | None = None) -> dict:
             mem["faded"] = False
     if len(events) > 80:
         mind["events"] = events[-80:]
-    # 上限保护：超出 160 条时，先丢最模糊、且不是出生记忆的
+    # Hard cap: beyond 160 items, drop the most faded non-birth memories first.
     if len(memories) > 160:
         ranked = sorted(enumerate(memories),
                         key=lambda iv: (iv[1].get("source") == "birth", iv[1].get("retention", 0)))
@@ -223,9 +226,9 @@ def recall(profile: dict, query: str, now: datetime.datetime | None = None, limi
         if r < 0.035:
             continue
         sim = _overlap(grams, set(mem.get("keywords", [])))
-        # 与当前话题无关时，只允许高留存 + 高情绪的记忆"浮上来"
+        # Off-topic: only high-retention, high-emotion memories may surface.
         score = 0.55 * sim + 0.35 * r + 0.10 * abs(float(mem.get("valence", 0)))
-        # 与当前话题必须有最低限度的语义重叠；否则再清晰也不该被"想起"
+        # A minimum of semantic overlap is required; otherwise nothing surfaces.
         if sim < 0.07:
             continue
         if score < 0.16:
@@ -257,7 +260,7 @@ def reinforce(profile: dict, ids: list[str], now: datetime.datetime | None = Non
             mem["retention"] = retention(mem, now)
 
 
-# ---------------------------------------------------------------- 心情
+# ---------------------------------------------------------------- mood
 MOOD_POINTS = {
     (0.78, 0.75): "明亮 · 上扬",
     (0.55, 0.78): "温和 · 靠近",
@@ -288,7 +291,7 @@ def baseline_mood(traits: dict[str, float]) -> dict[str, float]:
 
 
 def ensure(profile: dict, traits: dict[str, float] | None = None, birth: list[str] | None = None) -> dict:
-    """确保 profile 里有 mind 结构；首次创建时写入"出生记忆"。"""
+    """Make sure the profile has a mind structure; seed birth memories once."""
     traits = traits or {}
     now = _now()
     mind = profile.setdefault("mind", {})
@@ -326,7 +329,7 @@ def ensure(profile: dict, traits: dict[str, float] | None = None, birth: list[st
 
 
 def update_mood(profile: dict, message: str, intent: str = "", now: datetime.datetime | None = None) -> dict:
-    """在当前心情上叠加这句话的影响，并让心情向基线回落。"""
+    """Apply this sentence to the current mood, then let it drift to baseline."""
     now = now or _now()
     mind = profile.setdefault("mind", {})
     mood = mind.get("mood")
@@ -335,7 +338,7 @@ def update_mood(profile: dict, message: str, intent: str = "", now: datetime.dat
     baseline = mood.get("baseline") or {"valence": 0.5, "arousal": 0.5}
     last = _parse(mood.get("updated")) or now
     hours = max(0.0, (now - last).total_seconds() / 3600.0)
-    # 半衰期 5 小时回落到基线
+    # Half-life of five hours back to baseline.
     k = 1 - math.pow(0.5, hours / 5.0)
     v = mood.get("valence", 0.5) + (baseline["valence"] - mood.get("valence", 0.5)) * k
     a = mood.get("arousal", 0.5) + (baseline["arousal"] - mood.get("arousal", 0.5)) * k
@@ -367,10 +370,11 @@ def update_mood(profile: dict, message: str, intent: str = "", now: datetime.dat
     return {"valence": mood["valence"], "arousal": mood["arousal"], "label": mood["label"]}
 
 
-# ---------------------------------------------------------------- 对外接口
+# ---------------------------------------------------------------- public API
 def observe(profile: dict, message: str, reply_text: str = "", intent: str = "",
             now: datetime.datetime | None = None) -> dict:
-    """一次对话结束后：提取新记忆、强化被召回的记忆、推进遗忘与心情。"""
+    """After a turn: extract new memories, reinforce recalled ones, advance
+    forgetting and mood."""
     now = now or _now()
     ensure(profile, birth=None)
     learned = []
@@ -421,7 +425,7 @@ def recall_context(profile: dict, message: str, now: datetime.datetime | None = 
 
 
 def timeline(profile: dict, days: int = 30, now: datetime.datetime | None = None) -> list[dict]:
-    """给 UI 用的"未来 days 天留存预览"（不修改档案）。"""
+    """Retention preview for the next N days, for the UI. Does not mutate."""
     now = now or _now()
     memories = (profile.get("mind") or {}).get("memories", [])
     focus = sorted(memories, key=lambda m: -retention(m, now))[:6]
@@ -432,7 +436,7 @@ def timeline(profile: dict, days: int = 30, now: datetime.datetime | None = None
         for d in range(days + 1):
             fake = dict(mem)
             fake["last"] = _iso(now - datetime.timedelta(days=d) + datetime.timedelta(days=d))  # 保持 now 为基准
-            # 直接按当前留存率做指数外推
+            # Straight exponential extrapolation from current retention.
             r0 = retention(mem, now)
             last = _parse(mem.get("last")) or now
             stability = 1.0 * (1 + 0.75 * int(mem.get("rehearsals", 0))) * (1 + 0.9 * abs(float(mem.get("valence", 0))))
