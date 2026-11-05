@@ -2178,6 +2178,10 @@ function wireWelcome() {
   }
   const back = $('#btn-persona');
   if (back) back.addEventListener('click', () => setWelcomeMode('persona'));
+  const hi = $('#home-input');
+  const hs = $('#btn-home-say');
+  if (hs) hs.addEventListener('click', () => { const v = hi ? hi.value : ''; if (hi) hi.value = ''; homeSend(v); });
+  if (hi) hi.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const v = hi.value; hi.value = ''; homeSend(v); });
   let saved = 'persona';
   try { saved = localStorage.getItem('dl_welcome_mode') || 'persona'; } catch (e) { }
   setWelcomeMode(saved);
@@ -2185,6 +2189,39 @@ function wireWelcome() {
     const p = $('#welcome-persona');
     if (p && !p.hidden) initWelcomePersona();
   });
+}
+
+async function homeSend(text) {
+    text = (text || '').trim();
+    if (!text) return;
+    const log = $('#home-log'), greet = $('#home-greet');
+    if (log) log.classList.add('on');
+    if (greet) greet.classList.add('off');
+    const add = (who, t) => {
+        if (!log) return;
+        const d = document.createElement('div');
+        d.className = 'bub ' + who;
+        d.textContent = t;
+        log.appendChild(d);
+        log.scrollTop = log.scrollHeight;
+    };
+    add('me', text);
+    add('her', '……');
+    try {
+        const p = await ensureProfile();
+        if (!p) { add('her', '还没有档案。先运行 dl demo。'); return; }
+        const res = await apiPost('/api/chat', { id: p.id, profile: p, message: text, history: state.callHistory || [] });
+        const reply = (res && (res.text || res.reply)) || '……';
+        log.lastChild.textContent = reply;
+        state.callHistory = (state.callHistory || []).concat([
+            { role: 'user', text: text }, { role: 'assistant', text: reply },
+        ]).slice(-12);
+        if (welcomePersona) { welcomePersona.speak(); }
+        try { speakText(reply); } catch (e) { }
+        setTimeout(function () { if (welcomePersona) welcomePersona.stopSpeaking(); }, 900 + reply.length * 180);
+    } catch (e) {
+        log.lastChild.textContent = '（没接通）';
+    }
 }
 
 function wireUI() {

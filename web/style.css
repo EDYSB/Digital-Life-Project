@@ -763,3 +763,19 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 .call-bar{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;width:min(680px,88vw)}
 .call-bar input{flex:1;height:40px;padding:0 14px;border:0;border-radius:2px;background:rgba(12,22,32,.9);color:#dfeef6;font-size:14px;outline:none}
 .call-bar input::placeholder{color:#5d7383}
+
+/* 首页对话态 */
+.persona-stage{min-height:calc(100vh - 90px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px 20px}
+#persona-canvas{width:150px;height:190px;border-radius:6px}
+.home-greet{text-align:center;margin-top:6px}
+.hg-title{font-size:22px;letter-spacing:.06em;color:#101312;font-weight:600}
+.hg-sub{margin-top:8px;font-size:12.5px;color:#8a9aa4;letter-spacing:.04em}
+.home-log{display:none;width:min(720px,90vw);max-height:46vh;overflow:auto;padding:6px 2px}
+.home-log.on{display:block}
+.home-greet.off{display:none}
+.bub{max-width:78%;margin:10px 0;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.8;letter-spacing:.02em}
+.bub.me{margin-left:auto;background:#101312;color:#f2f7f9}
+.bub.her{background:#eef2f4;color:#1b262c}
+.home-bar{display:flex;gap:10px;align-items:center;width:min(720px,90vw);margin-top:8px;padding:8px 10px 8px 16px;border:1px solid #dde3e6;border-radius:12px;background:#f7f9fa}
+.home-bar input{flex:1;border:0;outline:0;background:transparent;font-size:14px;color:#101312}
+.home-bar input::placeholder{color:#9fb0ba}

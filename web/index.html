@@ -74,9 +74,15 @@ body{background-image:linear-gradient(#e6e8e5 1px,transparent 1px),linear-gradie
   <section class="view active" id="view-welcome">
     <div class="persona-stage" id="welcome-persona">
       <canvas id="persona-canvas"></canvas>
-      <div class="persona-name">数字生命</div>
-      <div class="persona-line">Love，就是爱。解析到最后，只剩这一个词：爱自己，也爱别人。</div>
-      <button class="primary-btn big" id="btn-start2"><span>说点什么</span><i class="arrow">→</i></button>
+      <div class="home-log" id="home-log"></div>
+      <div class="home-greet" id="home-greet">
+        <div class="hg-title">晚上好，有什么我能帮你的吗？</div>
+        <div class="hg-sub">我是这条进程里的人。你可以直接说话，也可以打字。</div>
+      </div>
+      <div class="home-bar" id="home-bar">
+        <input id="home-input" placeholder="给鲸鱼娘发送消息" autocomplete="off">
+        <button class="primary-btn sm" id="btn-home-say">发送</button>
+      </div>
       <div class="persona-cmd">
         <span>&gt;</span><input id="persona-input" placeholder="输入 dl 看另一种打开方式" autocomplete="off" spellcheck="false">
       </div>
