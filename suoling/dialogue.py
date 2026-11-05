@@ -407,7 +407,7 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
             emo = {"arousal": round(float(mood.get("arousal", 0.5)), 2),
                    "valence": round(float(mood.get("valence", 0.55)), 2),
                    "label": mood.get("label") or "平静 · 中性"}
-            return {"text": hit, "intent": "llm", "intent_zh": "模型",
+            return {"text": hit, "intent": intent, "via": "llm", "intent_zh": "模型",
                     "emotion": emo, "followup": "", "voice": per0.get("voice", "calm"),
                     "memory": None, "mood": emo, "world": world,
                     "disclaimer": "由外部模型生成，不是意识。"}

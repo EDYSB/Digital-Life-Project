@@ -186,3 +186,11 @@ A: 能。网页端的立绘与动作不需要 GPU；只有接数字人后端时�
 dl create [--name 名字] [--voice calm|warm|sharp|neutral] [--traits 好奇=70,共情=80]
   手工创造一个数字生命：不传脑电与基因，七维数值自己定，0-100。
   同样参数 = 同样编号，可复现。只支持命令行，网页不能创建。
+
+dl model [api|ollama|rules|auto]
+  选择后端，可随时切换：
+    api     只用 DeepSeek（需要 key）
+    ollama  只用本机模型（自动从 /api/tags 选已装的）
+    rules   强制规则对话，不联网
+    auto    有 key 用 api，否则找本机模型（默认）
+  dl api --test 会真发一句话，告诉你实际用的是哪个模型、延迟多少。

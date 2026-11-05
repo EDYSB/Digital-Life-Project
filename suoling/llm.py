@@ -67,7 +67,16 @@ def detect(force: bool = False) -> dict:
 
     info = {"kind": "none", "model": "", "base": "", "note": ""}
 
-    key = config.deepseek_key()
+    mode = str(config.load().get("llm_mode") or "auto").lower()
+    key = config.deepseek_key() if mode in ("auto", "api") else ""
+    allow_ollama = mode in ("auto", "ollama")
+
+    if mode == "rules":
+        info["note"] = "已锁定规则对话（dl model auto 可恢复）"
+        _CACHE["at"] = now
+        _CACHE["info"] = info
+        return info
+
     if key:
         cfg = config.load()
         info = {
@@ -76,7 +85,7 @@ def detect(force: bool = False) -> dict:
             "base": (cfg.get("deepseek_base") or "https://api.deepseek.com").rstrip("/"),
             "note": "DeepSeek API",
         }
-    else:
+    elif allow_ollama:
         candidates = []
         env = os.environ.get("ECHOMIND_LLM_URL", "").strip()
         if env:

@@ -161,6 +161,35 @@ def cmd_mode(args) -> None:
     print("  已切到 %s 模式。" % name)
 
 
+def cmd_model(args) -> None:
+    """Choose which backend answers: api / ollama / rules / auto."""
+    from . import config, llm
+
+    cur = config.load()
+    if args.set:
+        want = args.set.lower()
+        if want not in ("api", "ollama", "rules", "auto"):
+            print("  只能选 api / ollama / rules / auto")
+            return
+        cur["llm_mode"] = want
+        config.save(cur)
+        llm.detect(force=True)
+        print("  已切到：%s" % want)
+
+    info = llm.detect(force=True)
+    print("")
+    print("  当前模式：%s" % (config.load().get("llm_mode") or "auto"))
+    print("  实际使用：%s" % (info["note"] or "—"))
+    if info["kind"] != "none":
+        print("  模型：%s" % info["model"])
+    print("")
+    print("  api     只用 DeepSeek（需要 key）")
+    print("  ollama  只用本机模型（自动选已装的）")
+    print("  rules   强制规则对话，不联网")
+    print("  auto    有 key 用 api，否则找本机模型")
+    print("")
+
+
 def cmd_api_test(args) -> None:
     """Send one real message and report which model answered."""
     from . import llm
@@ -614,6 +643,10 @@ def main(argv: list[str] | None = None) -> None:
     md = sub.add_parser("mode", help="gpu / pet / auto")
     md.add_argument("name", nargs="?", default="")
     md.set_defaults(func=cmd_mode)
+
+    md = sub.add_parser("model", help="选择后端：api / ollama / rules / auto")
+    md.add_argument("set", nargs="?", default="")
+    md.set_defaults(func=cmd_model)
 
     ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
     ap_.add_argument("key", nargs="?", default="")
