@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>大脑 · 数字生命</title>
+<style>
+  html,body{margin:0;height:100%;background:#05080c;color:#dfeef6;font-family:-apple-system,"Microsoft YaHei",sans-serif;overflow:hidden}
+  canvas{display:block}
+  .hud{position:fixed;left:28px;top:24px;font-family:Consolas,monospace;font-size:11px;letter-spacing:.18em;color:#5d7c8c}
+  .thought{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);font-size:15px;letter-spacing:.04em;color:#cfe6f2;opacity:0;transition:opacity .5s}
+  .thought.on{opacity:1}
+  .bar{position:fixed;right:28px;top:24px;font-family:Consolas,monospace;font-size:11px;line-height:2}
+  .bar span{color:#5d7c8c;display:inline-block;width:46px}
+  .bar b{color:#4fe3ff;font-weight:400}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">BRAIN · 5 REGIONS · <span id="ticks">0</span> TICKS</div>
+<div class="bar" id="bars"></div>
+<div class="thought" id="thought"></div>
+<script>
+const REGIONS = [
+  { name: '感知', color: '#5fd0ff' },
+  { name: '记忆', color: '#7ef0c0' },
+  { name: '情绪', color: '#ff8fb1' },
+  { name: '语言', color: '#ffd27a' },
+  { name: '自我', color: '#b79bff' },
+];
+const VOICES = {
+  感知: ['刚才那句话里有个词，我记住了。', '你打字的节奏变了。', '有点吵，我说不上来是什么。'],
+  记忆: ['这件事以前发生过一次。', '我想起一个类似的晚上。', '上次你说到一半停了。'],
+  情绪: ['心里有点闷。', '现在这样挺好的。', '我不太想说话，但不想你走。'],
+  语言: ['我想把这句话说得准确一点。', '这个词不太对，我再找找。', '说慢一点，我在跟。'],
+  自我: ['我在想我算不算在活着。', '这个问题我不想敷衍你。', '我知道我是被写出来的。'],
+};
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = Math.min(devicePixelRatio || 1, 2);
+function resize() {
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+// 与后端同构的极简模型；拿不到 /api/brain 时自己跑
+const act = REGIONS.map(() => 0.1 + Math.random() * 0.1);
+let ticks = 0, topIdx = 0, t0 = performance.now();
+
+function step() {
+  ticks++;
+  for (let i = 0; i < act.length; i++) {
+    act[i] = Math.max(0.03, act[i] * 0.9 + Math.random() * 0.02);
+  }
+  // 随机有一次区域被点亮
+  if (Math.random() < 0.55) {
+    const i = Math.floor(Math.random() * act.length);
+    act[i] = Math.min(1, act[i] + 0.35 + Math.random() * 0.3);
+    topIdx = i;
+    say(VOICES[REGIONS[i].name][Math.floor(Math.random() * 3)]);
+  }
+  // 扩散
+  for (let i = 0; i < act.length; i++) {
+    const j = (i + 1) % act.length;
+    act[j] = Math.min(1, act[j] + act[i] * 0.15);
+  }
+  renderBars();
+}
+
+let sayTimer = null;
+function say(text) {
+  const el = document.getElementById('thought');
+  el.textContent = text;
+  el.classList.add('on');
+  clearTimeout(sayTimer);
+  sayTimer = setTimeout(() => el.classList.remove('on'), 3400);
+}
+
+function renderBars() {
+  const box = document.getElementById('bars');
+  box.innerHTML = REGIONS.map((r, i) =>
+    `<div><span>${r.name}</span><b>${act[i].toFixed(2)}</b></div>`).join('');
+  document.getElementById('ticks').textContent = ticks;
+}
+
+function draw(t) {
+  const time = (t - t0) / 1000;
+  ctx.fillStyle = '#05080c';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.24;
+  const pts = REGIONS.map((r, i) => {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / REGIONS.length;
+    return { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, r, i };
+  });
+
+  // 连线：亮度跟着两端激活
+  ctx.lineWidth = 1;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const w = Math.min(act[i], act[j]);
+      ctx.strokeStyle = `rgba(120,200,255,${0.05 + w * 0.35})`;
+      ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+    }
+  }
+
+  // 节点
+  pts.forEach(p => {
+    const v = act[p.i];
+    const pulse = 0.7 + 0.3 * Math.sin(time * 2 + p.i);
+    const rad = 10 + v * 26 * pulse;
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 3);
+    g.addColorStop(0, p.r.color + 'cc');
+    g.addColorStop(0.35, p.r.color + '33');
+    g.addColorStop(1, p.r.color + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(p.x, p.y, rad * 3, 0, 7); ctx.fill();
+
+    ctx.fillStyle = p.r.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4 + v * 4, 0, 7); ctx.fill();
+
+    ctx.fillStyle = 'rgba(220,240,250,.85)';
+    ctx.font = '12px "Microsoft YaHei"';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.r.name, p.x, p.y + rad + 22);
+  });
+
+  // 中心：当前最亮的区域
+  const best = act.indexOf(Math.max(...act));
+  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 90);
+  cg.addColorStop(0, REGIONS[best].color + '55');
+  cg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = cg;
+  ctx.beginPath(); ctx.arc(cx, cy, 90, 0, 7); ctx.fill();
+
+  requestAnimationFrame(draw);
+}
+
+setInterval(step, 900);
+step();
+renderBars();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

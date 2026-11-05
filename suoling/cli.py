@@ -279,6 +279,48 @@ def cmd_brain(args) -> None:
     print("")
 
 
+def cmd_brain_ui(args) -> None:
+    """打开大脑的独立可视化页面（不自动启动，只在这个命令里开）。"""
+    import socket
+    import time
+    import webbrowser
+
+    port = 8017
+    alive = False
+    for _ in range(2):
+        sk = socket.socket()
+        sk.settimeout(0.3)
+        alive = sk.connect_ex(("127.0.0.1", port)) == 0
+        sk.close()
+        if alive:
+            break
+
+    if not alive:
+        import subprocess
+        import sys as _sys
+
+        subprocess.Popen(
+            [_sys.executable, "app.py", "serve", "--port", str(port), "--no-browser"],
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        for _ in range(20):
+            time.sleep(0.3)
+            sk = socket.socket()
+            sk.settimeout(0.3)
+            alive = sk.connect_ex(("127.0.0.1", port)) == 0
+            sk.close()
+            if alive:
+                break
+
+    url = "http://127.0.0.1:%d/brain.html" % port
+    print("  大脑：%s" % url)
+    try:
+        webbrowser.open(url)
+    except Exception:
+        pass
+
+
 def cmd_stats(args) -> None:
     """后台：参数只在这里看。"""
     items = pipeline.list_minds()
@@ -429,6 +471,9 @@ def main(argv: list[str] | None = None) -> None:
     fi.add_argument("--id", default="")
     fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
     fi.set_defaults(func=cmd_final)
+
+    bu = sub.add_parser("brain-ui", help="打开大脑的独立可视化页面")
+    bu.set_defaults(func=cmd_brain_ui)
 
     br = sub.add_parser("brain", help="看它现在脑子里最亮的是哪块")
     br.add_argument("--id", default="")
