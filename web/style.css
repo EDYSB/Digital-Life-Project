@@ -851,3 +851,6 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 @keyframes dl-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.012)}}
 .avatar-host{display:flex;align-items:flex-end;justify-content:center}
 .avatar-gif{animation:dl-breathe 4.2s ease-in-out infinite}
+
+/* An <img> with an empty src renders a broken-image glyph; hide it. */
+img[src=""], img:not([src]){display:none!important}
