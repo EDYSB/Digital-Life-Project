@@ -2217,7 +2217,7 @@ function randomAction() {
         img.src = a.gif + '?' + Date.now();
         sayBubble(a.lines[Math.floor(Math.random() * a.lines.length)]);
         setTimeout(function () {
-            img.src = '/assets/df-idle.png?' + Date.now();
+            img.src = '/assets/anim/idle.gif?' + Date.now();
         }, 2600);
         randomAction();
     }, 12000 + Math.random() * 12000);
@@ -2227,15 +2227,14 @@ function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
   if (!img) return;
-  img.src = '/assets/df-idle.png';
+  img.src = '/assets/anim/idle.gif';
   img.classList.add('on');
   if (cv) cv.style.display = 'none';
   img.onclick = function () {
     img.src = '/assets/anim/happy.gif?' + Date.now();
-    sayBubble(['哦鲸鲸…', '别戳我啦。', '在的。', '今天也要好好吃饭。'][Math.floor(Math.random() * 4)]);
     clearTimeout(startAvatarGif._t);
     startAvatarGif._t = setTimeout(function () {
-      img.src = '/assets/df-idle.png?' + Date.now();
+      img.src = '/assets/anim/idle.gif?' + Date.now();
     }, 2200);
   };
 }
@@ -2310,6 +2309,8 @@ async function homeSend(text) {
         log.appendChild(d);
         log.scrollTop = log.scrollHeight;
     };
+    const av = document.querySelector('#avatar-gif');
+    if (av) av.src = '/assets/anim/think.gif?' + Date.now();
     add('me', text);
     const THINKING = ['嗯……', '我想一下。', '这个得慢慢说。', '……让我想想。', '你等我一下。'];
     const t0 = Date.now();
@@ -2323,6 +2324,9 @@ async function homeSend(text) {
         state.callHistory = (state.callHistory || []).concat([
             { role: 'user', text: text }, { role: 'assistant', text: reply },
         ]).slice(-12);
+        const av2 = document.querySelector('#avatar-gif');
+        if (av2) av2.src = '/assets/anim/happy.gif?' + Date.now();
+        setTimeout(function () { const av3 = document.querySelector('#avatar-gif'); if (av3) av3.src = '/assets/anim/idle.gif?' + Date.now(); }, 2600);
         if (welcomePersona) { welcomePersona.speak(); }
         try { speakText(reply); } catch (e) { }
         setTimeout(function () { if (welcomePersona) welcomePersona.stopSpeaking(); }, 900 + reply.length * 180);
