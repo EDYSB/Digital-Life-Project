@@ -1384,7 +1384,6 @@ async function openChat() {
       ? new PersonaAvatar(chatCv, { color: p.persona.color })
       : new Avatar(chatCv, { color: p.persona.color });
   }
-  tryLive2D(chatCv.parentElement, function (v) { chatAvatar = v; });
   chatAvatar.setColor(p.persona.color);
   if (hasFace && chatAvatar.setViews) chatAvatar.setViews(p.avatar.views);
   else if (chatAvatar.setVector) chatAvatar.setVector();
@@ -2081,7 +2080,6 @@ function openCall() {
     if (cv && window.PersonaAvatar) {
         if (!callPersona) callPersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
         else callPersona.resize();
-        tryLive2D(cv.parentElement, function (v) { callPersona = v; });
     }
     const st = $('#call-status'), sub = $('#call-sub');
     const input = $('#call-input');
@@ -2153,26 +2151,10 @@ function hangup() {
 let welcomePersona = null;
 
 
-/* 尽量把 Live2D 挂到某个容器上；成功就替换掉静态头像 */
-async function tryLive2D(host, setter) {
-  if (!window.Live2DView || !host) return false;
-  try {
-    const v = await window.Live2DView.mount(host, {});
-    if (v) { setter(v); return true; }
-  } catch (e) { }
-  return false;
-}
 
 async function initWelcomePersona() {
   const cv = document.querySelector('#persona-canvas');
   if (!cv) return;
-  if (window.Live2DView && !welcomePersona) {
-    try {
-      const host = document.querySelector('#avatar-host') || cv.parentElement;
-      const v = await window.Live2DView.mount(host, {});
-      if (v) { welcomePersona = v; return; }
-    } catch (e) { }
-  }
   if (!window.PersonaAvatar) return;
   if (!welcomePersona) welcomePersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
   else if (welcomePersona.resize) welcomePersona.resize();
