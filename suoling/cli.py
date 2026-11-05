@@ -161,7 +161,30 @@ def cmd_mode(args) -> None:
     print("  已切到 %s 模式。" % name)
 
 
+def cmd_api_test(args) -> None:
+    """Send one real message and report which model answered."""
+    from . import llm
+
+    info = llm.detect(force=True)
+    print("")
+    print("  检测：%s" % (info["note"] or "—"))
+    if info["kind"] != "none":
+        print("  端点：%s" % info["base"])
+        print("  模型：%s" % info["model"])
+    print("  正在试一句……")
+    result = llm.probe()
+    if result.get("ok"):
+        print("  已连接 · %d ms" % result.get("ms", 0))
+        print("  它回：%s" % result.get("text", ""))
+    else:
+        print("  失败：%s" % result.get("error", "未知原因"))
+        print("  对话会自动退回规则引擎，不会报错。")
+    print("")
+
+
 def cmd_api(args) -> None:
+    if getattr(args, "test", False):
+        return cmd_api_test(args)
     """Show or set the API key: dl api sk-xxx / dl api --clear / dl api"""
     from . import config
 
@@ -595,6 +618,7 @@ def main(argv: list[str] | None = None) -> None:
     ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
     ap_.add_argument("key", nargs="?", default="")
     ap_.add_argument("--clear", action="store_true", help="清空 key")
+    ap_.add_argument("--test", action="store_true", help="发一句话，验证模型是否真的可用")
     ap_.set_defaults(func=cmd_api)
 
     ac = sub.add_parser("account", help="建账户（可选）：档案分到 minds/<账户>/")

@@ -1,22 +1,109 @@
-"""本地大模型适配层（可选）。
+"""Model adapter: DeepSeek API, a local Ollama, or the rule engine.
 
-设置 ECHOMIND_LLM_URL（例如 http://127.0.0.1:11434）后，对话优先走本地模型；
-没有配置或调用失败时，自动回退到规则对话。仍然是单机、无云端。
+Detection is automatic and cheap:
 
-提示词只给：运行事实、召回的记忆、当前心情、世界稳定度，以及"短、口语、别解释自己"。
+    1. a DeepSeek key in config  -> use the API
+    2. ECHOMIND_LLM_URL set      -> that Ollama
+    3. otherwise                 -> try 127.0.0.1:11434 (Ollama default)
+    4. nothing reachable         -> rules only, and say so once
+
+The model name is resolved from the Ollama itself (`/api/tags`) instead of
+being hard-coded, so whatever is actually installed gets used.
+
+The prompt only receives: run facts, recalled memories, mood, world stability,
+plus the style constraints (short, spoken, no self-explanation).
 """
 
 from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.request
 
 from . import config
 
+_CACHE = {"at": 0.0, "info": None}
+_TTL = 60.0
+
+PREFERRED = ("qwen", "deepseek", "llama", "mistral", "gemma")
+
+
+def _get_json(url: str, timeout: float = 1.5):
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8", "replace"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _ollama_tags(base: str) -> list:
+    data = _get_json(base.rstrip("/") + "/api/tags")
+    if not isinstance(data, dict):
+        return []
+    out = []
+    for m in data.get("models") or []:
+        name = m.get("name") or m.get("model") or ""
+        if name:
+            out.append(name)
+    return out
+
+
+def _pick_model(names: list, wanted: str = "") -> str:
+    if wanted and wanted in names:
+        return wanted
+    for pref in PREFERRED:
+        for n in names:
+            if pref in n.lower():
+                return n
+    return names[0] if names else ""
+
+
+def detect(force: bool = False) -> dict:
+    """Which backend is usable right now, and with which model."""
+    now = time.time()
+    if not force and _CACHE["info"] and now - _CACHE["at"] < _TTL:
+        return _CACHE["info"]
+
+    info = {"kind": "none", "model": "", "base": "", "note": ""}
+
+    key = config.deepseek_key()
+    if key:
+        cfg = config.load()
+        info = {
+            "kind": "deepseek",
+            "model": cfg.get("deepseek_model") or "deepseek-chat",
+            "base": (cfg.get("deepseek_base") or "https://api.deepseek.com").rstrip("/"),
+            "note": "DeepSeek API",
+        }
+    else:
+        candidates = []
+        env = os.environ.get("ECHOMIND_LLM_URL", "").strip()
+        if env:
+            candidates.append(env)
+        candidates.append("http://127.0.0.1:11434")
+        for base in candidates:
+            names = _ollama_tags(base)
+            if not names:
+                continue
+            wanted = os.environ.get("ECHOMIND_LLM_MODEL", "").strip()
+            info = {
+                "kind": "ollama",
+                "model": _pick_model(names, wanted),
+                "base": base,
+                "note": "Ollama（本机 %d 个模型）" % len(names),
+            }
+            break
+        else:
+            info["note"] = "没有可用的模型，使用规则对话"
+
+    _CACHE["at"] = now
+    _CACHE["info"] = info
+    return info
+
 
 def enabled() -> bool:
-    return bool(os.environ.get("ECHOMIND_LLM_URL")) or bool(config.deepseek_key())
+    return detect()["kind"] != "none"
 
 
 def _prompt(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str:
@@ -38,13 +125,18 @@ def _prompt(profile: dict, message: str, recalled: list[dict], mood: dict, world
 
 
 def reply(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str | None:
-    hit = deepseek(profile, message, recalled, mood, world)
-    if hit:
-        return hit
-    if not os.environ.get("ECHOMIND_LLM_URL"):
+    info = detect()
+    if info["kind"] == "deepseek":
+        return deepseek(profile, message, recalled, mood, world)
+    if info["kind"] == "ollama":
+        return ollama(info["base"], info["model"], profile, message, recalled, mood, world)
+    return None
+
+
+def ollama(base: str, model: str, profile: dict, message: str,
+           recalled: list[dict], mood: dict, world: dict) -> str | None:
+    if not model:
         return None
-    base = os.environ["ECHOMIND_LLM_URL"].rstrip("/")
-    model = os.environ.get("ECHOMIND_LLM_MODEL", "qwen2.5:7b")
     payload = {
         "model": model,
         "prompt": _prompt(profile, message, recalled, mood, world),
@@ -53,11 +145,11 @@ def reply(profile: dict, message: str, recalled: list[dict], mood: dict, world: 
     }
     try:
         req = urllib.request.Request(
-            base + "/api/generate",
+            base.rstrip("/") + "/api/generate",
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=30) as r:
+        with urllib.request.urlopen(req, timeout=45) as r:
             data = json.loads(r.read())
         text = (data.get("response") or "").strip()
         return text[:600] if text else None
@@ -66,7 +158,7 @@ def reply(profile: dict, message: str, recalled: list[dict], mood: dict, world: 
 
 
 def deepseek(profile: dict, message: str, recalled: list[dict], mood: dict, world: dict) -> str | None:
-    """DeepSeek 官方 API。没填 key 就返回 None，自动回落。"""
+    """DeepSeek official API. Returns None when unusable, so the rules take over."""
     key = config.deepseek_key()
     if not key:
         return None
@@ -91,5 +183,19 @@ def deepseek(profile: dict, message: str, recalled: list[dict], mood: dict, worl
             data = json.loads(r.read())
         text = (data["choices"][0]["message"]["content"] or "").strip()
         return text[:600] if text else None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
+
+
+def probe() -> dict:
+    """One real request, for `dl api --test`."""
+    info = detect(force=True)
+    if info["kind"] == "none":
+        return {"ok": False, "info": info, "error": "没有找到可用的模型"}
+    profile = {"persona": {"code": "TEST"}, "id": "probe"}
+    t0 = time.time()
+    text = reply(profile, "在吗", [], {}, {})
+    ms = int((time.time() - t0) * 1000)
+    if not text:
+        return {"ok": False, "info": info, "error": "连上了但没拿到回复", "ms": ms}
+    return {"ok": True, "info": info, "text": text[:60], "ms": ms}
