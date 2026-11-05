@@ -3,7 +3,7 @@
    ============================================================ */
 'use strict';
 
-/* ---------------- 工具 ---------------- */
+/* ---------------- helpers ---------------- */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -37,7 +37,7 @@ const state = {
   pendingScan: null,
 };
 
-/* ---------------- 视图切换 ---------------- */
+/* ---------------- view switching ---------------- */
 const VIEWS = ['welcome', 'intake', 'scan', 'dossier', 'chat', 'library', 'compare', 'admin'];
 const STEP_OF = { welcome: 0, intake: 1, scan: 2, dossier: 3, chat: 3, library: 3, compare: 3, admin: 3 };
 
@@ -55,7 +55,7 @@ function show(view) {
   if (view === 'chat') { requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); }
 }
 
-/* ---------------- 背景神经网络 ---------------- */
+/* ---------------- background network ---------------- */
 (function bg() {
   const cv = $('#bg-canvas');
   const ctx = cv.getContext('2d');
@@ -114,7 +114,7 @@ function show(view) {
   resize(); addEventListener('resize', resize); requestAnimationFrame(frame);
 })();
 
-/* ---------------- 迷你波形 / 螺旋 ---------------- */
+/* ---------------- mini wave / helix ---------------- */
 (function minis() {
   const wav = $('.mini-wave');
   if (wav) {
@@ -168,7 +168,7 @@ function show(view) {
   }
 })();
 
-/* ---------------- 粒子球 ---------------- */
+/* ---------------- particle orb ---------------- */
 class Orb {
   constructor(canvas, opts = {}) {
     this.cv = canvas;
@@ -236,14 +236,14 @@ class Orb {
         : `rgba(${rgb},${a})`;
       c.beginPath(); c.arc(q.sx, q.sy, q.size, 0, Math.PI * 2); c.fill();
     }
-    // 内核
+    // core
     const core = c.createRadialGradient(cx, cy, 0, cx, cy, R * .26);
     core.addColorStop(0, 'rgba(255,255,255,.85)');
     core.addColorStop(.35, `rgba(${rgb},.5)`);
     core.addColorStop(1, `rgba(${rgb},0)`);
     c.fillStyle = core;
     c.beginPath(); c.arc(cx, cy, R * .26, 0, Math.PI * 2); c.fill();
-    // 外环
+    // outer ring
     c.strokeStyle = `rgba(${rgb},.16)`;
     c.lineWidth = 1;
     c.beginPath(); c.ellipse(cx, cy, R * 1.18, R * .32, this.rot * .3, 0, Math.PI * 2); c.stroke();
@@ -256,7 +256,7 @@ function hexRgb(hex) {
   return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
 }
 
-/* ---------------- 扫描舞台 ---------------- */
+/* ---------------- scan stage ---------------- */
 const ScanStage = {
   cv: null, ctx: null, active: false, prog: 0, done: 0, onDone: null, t: 0,
   init() {
@@ -282,7 +282,7 @@ const ScanStage = {
     this.t += .016;
     c.clearRect(0, 0, W, H);
 
-    // 两条数据流汇入中心
+    // two streams converge
     const stage = this.prog / 100;
     for (let side = 0; side < 2; side++) {
       const dir = side ? 1 : -1;
@@ -300,7 +300,7 @@ const ScanStage = {
     }
     c.globalAlpha = 1;
 
-    // 汇聚环
+    // convergence ring
     const r = 60 * s + Math.sin(this.t * 2) * 6 * s + stage * 40 * s;
     const g = c.createRadialGradient(cx, cy, r * .2, cx, cy, r * 2.2);
     g.addColorStop(0, 'rgba(255,255,255,.20)');
@@ -310,7 +310,7 @@ const ScanStage = {
     c.fillStyle = g;
     c.beginPath(); c.arc(cx, cy, r * 2.2, 0, Math.PI * 2); c.fill();
 
-    // 旋转粒子
+    // orbiting particles
     for (let i = 0; i < 70; i++) {
       const a = (i / 70) * Math.PI * 2 + this.t * (1.2 + (i % 5) * .1);
       const rr = r * (0.7 + (i % 7) / 10);
@@ -319,7 +319,7 @@ const ScanStage = {
       c.beginPath(); c.arc(x, y, 1.4 * s, 0, Math.PI * 2); c.fill();
     }
 
-    // 完成闪光
+    // completion flash
     if (this.done > 0) {
       this.done *= .94;
       c.fillStyle = `rgba(220,250,255,${this.done * .5})`;
@@ -329,7 +329,7 @@ const ScanStage = {
   },
 };
 
-/* ---------------- 雷达图 ---------------- */
+/* ---------------- radar ---------------- */
 function drawRadar(cv, traits, color) {
   const dpr = Math.min(2, devicePixelRatio || 1);
   const r = cv.getBoundingClientRect();
@@ -386,7 +386,7 @@ function drawRadar(cv, traits, color) {
   c.restore();
 }
 
-/* ---------------- 波形 ---------------- */
+/* ---------------- waveform ---------------- */
 const Wave = {
   data: [], pos: 0, cv: null, t: 0,
   draw(cv, samples) {
@@ -439,7 +439,7 @@ const Wave = {
   }
 };
 
-/* ---------------- 频谱 ---------------- */
+/* ---------------- spectrum ---------------- */
 function drawSpectrum(cv, freqs, power, bands, peak) {
   const dpr = Math.min(2, devicePixelRatio || 1);
   const r = cv.getBoundingClientRect();
@@ -452,7 +452,7 @@ function drawSpectrum(cv, freqs, power, bands, peak) {
   let pmin = Infinity, pmax = -Infinity;
   for (const p of power) { if (p < pmin) pmin = p; if (p > pmax) pmax = p; }
   const yOf = p => H - ((p - pmin) / (pmax - pmin || 1)) * (H - 6) - 2;
-  // 频带底色
+  // band backdrop
   const bandMap = { delta: '#6b5bd2', theta: '#9b6bff', alpha: '#38e8ff', beta: '#ffb057', gamma: '#ff5fa2' };
   for (const [k, col] of Object.entries(bandMap)) {
     const b = bands[k]; if (!b) continue;
@@ -496,7 +496,7 @@ function hexA(hex, a) {
   return `rgba(${rgb},${a})`;
 }
 
-/* ---------------- DNA 螺旋 ---------------- */
+/* ---------------- DNA helix ---------------- */
 const Helix = {
   cv: null, bases: '', t: 0, raf: 0,
   start(cv, bases) {
@@ -534,7 +534,7 @@ const Helix = {
       const y1 = mid + Math.sin(ph) * amp;
       const y2 = mid + Math.sin(ph + Math.PI) * amp;
       const depth = (Math.cos(ph) + 1) / 2;
-      // 连接线
+      // rungs
       c.strokeStyle = `rgba(120,190,210,${.05 + depth * .18})`;
       c.lineWidth = 1;
       c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y2); c.stroke();
@@ -555,7 +555,7 @@ const Helix = {
   },
 };
 
-/* ---------------- 音景 ---------------- */
+/* ---------------- soundscape ---------------- */
 const Audio = {
   ctx: null, nodes: [], playing: false,
   ensure() {
@@ -581,7 +581,7 @@ const Audio = {
     lp.frequency.value = 900 + 1800 * (cfg.brightness || .5);
     lp.Q.value = .6;
     lp.connect(master);
-    // 持续低音
+    // sustained bass
     (cfg.band_tones || []).forEach((bt, i) => {
       const o = ac.createOscillator();
       o.type = i % 2 ? 'sine' : 'triangle';
@@ -593,7 +593,7 @@ const Audio = {
       o.start();
       this.nodes.push(o, g);
     });
-    // 和弦琶音
+    // chord arpeggio
     const notes = cfg.notes || [110, 165, 220];
     const tempo = cfg.tempo || 60;
     const dur = cfg.duration || 24;
@@ -641,7 +641,7 @@ async function apiPost(path, body) {
   return j;
 }
 
-/* ---------------- 录入 ---------------- */
+/* ---------------- intake ---------------- */
 function setSlot(kind, file, label) {
   state[kind] = file ? { file, name: file.name, size: file.size, label: label || '' } : null;
   const box = $(kind === 'eeg' ? '#eeg-file' : '#dna-file');
@@ -701,7 +701,7 @@ function pickFile(kind, file) {
   setSlot(kind, file);
 }
 
-/* ---------------- 面孔 ---------------- */
+/* ---------------- face ---------------- */
 let facePreview = null;
 
 function facePayload() {
@@ -898,7 +898,7 @@ function toggleMic() {
   });
 }
 
-/* ---------------- 扫描流程 ---------------- */
+/* ---------------- scan flow ---------------- */
 async function runScan(eeg, dna) {
   show('scan');
   $('#scan-error').hidden = true;
@@ -1018,7 +1018,7 @@ const QUOTES = [
 ];
 const pickQuote = () => QUOTES[Math.floor(Math.random() * QUOTES.length)];
 
-/* ---------------- 档案渲染 ---------------- */
+/* ---------------- dossier ---------------- */
 let mainOrb = null, mainAvatar = null, chatAvatar = null, chatOrb = null, cmpOrbA = null, cmpOrbB = null;
 let chatSpeakEl = null;
 let currentAudioCfg = null;
@@ -1046,7 +1046,7 @@ function renderDossier(p) {
     '维度 · ' + p.traits.slice().sort((a, b) => b.value - a.value).slice(0, 3).map(t => t.name).join(' / '),
   ];
   $('#d-chips').innerHTML = chips.map(c => `<span class="tag">${esc(c)}</span>`).join('');
-  // 参数一律不上前台，只在 `dl stats` / 后台页出现
+  // Parameters never reach the front end; see dl stats.
   const orgEl = $('#d-origin');
   if (orgEl) { orgEl.innerHTML = ''; orgEl.style.display = 'none'; }
   ['#signal-stats', '#dna-foot', '#fusion-foot', '#life-status'].forEach(function (sel) {
@@ -1073,7 +1073,7 @@ function renderDossier(p) {
     }).join('');
   }
 
-  // 面孔卡
+  // face card
   const hasFace = !!(p.avatar && p.avatar.views && p.avatar.views.length);
   const faceCard = $('#face-card');
   if (hasFace) {
@@ -1105,7 +1105,7 @@ function renderDossier(p) {
     faceCard.hidden = true;
   }
 
-  // 雷达 + 维度列表
+  // radar + trait list
   const traits = p.traits;
   requestAnimationFrame(() => {
     drawRadar($('#radar-canvas'), traits, color);
@@ -1123,7 +1123,7 @@ function renderDossier(p) {
     脑波可信度 ${Math.round(p.fusion.eeg_confidence * 100)}% · 基因可信度 ${Math.round(p.fusion.dna_confidence * 100)}%<br>
     悬停任意维度可看到它的来源与两通道各自的取值。`;
 
-  // 波形
+  // waveform
   const ch = p.eeg.waveform.channels[0] || [];
   const norm = normalizeSamples(ch);
   Wave.draw($('#wave-canvas'), norm);
@@ -1151,7 +1151,7 @@ function renderDossier(p) {
     ['Hurst', p.eeg.hurst.toFixed(2)],
   ].map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
 
-  // 基因
+  // genome
   const prev = p.dna.preview || {};
   Helix.start($('#helix-canvas'), prev.bases || '');
   $('#dna-sub').textContent = prev.real ? 'DNA · 真实序列片段' : 'DNA · 指纹示意';
@@ -1162,15 +1162,15 @@ function renderDossier(p) {
     扫描 ${fmt(p.dna.stats.scan_bases || 0)} bp · 置信度 ${Math.round(p.dna.confidence * 100)}%<br>
     ${esc(p.dna.disclaimer || '')}`;
 
-  // 时间线
+  // timeline
   $('#timeline').innerHTML = (p.timeline || []).map(t =>
     `<li><time>${esc(t.t)}</time><em>${esc(t.tag)}</em><span>${esc(t.text)}</span></li>`).join('');
 
-  // 记忆
+  // memory
   $('#memories').innerHTML = (per.memories || []).map(m =>
     `<div class="memory"><b>${esc(m.tag)}</b>${esc(m.text)}</div>`).join('');
 
-  // 质量与缺口
+  // quality and gaps
   const missCount = (p.dna.missing || []).length;
   const qNotes = (q.notes || []).slice(0, 3);
   $('#shadow-body').innerHTML = `
@@ -1225,7 +1225,7 @@ function renderStarMap(p) {
     $('#starmap-days-label').textContent = daysLabel(d);
     if (starMap.selected) showStarDetail(starMap.selected);
   };
-  // 图例
+  // legend
   const legend = $('#starmap-legend');
   legend.innerHTML = '';
   [['情景记忆', '#38e8ff'], ['情绪', '#ff5fa2'], ['语言/事实', '#9b6bff'], ['偏好', '#ffb057'], ['结构性记忆', '#7ee787']]
@@ -1234,7 +1234,7 @@ function renderStarMap(p) {
       span.innerHTML = '<i style="background:' + it[1] + '"></i>' + it[0];
       legend.appendChild(span);
     });
-  // 脑区构成
+  // region composition
   const nodes = StarMap.buildNodes(p);
   const counts = {};
   nodes.forEach(function (n) { counts[n.region] = (counts[n.region] || 0) + 1; });
@@ -1329,19 +1329,19 @@ function drawMood(cv, p) {
   const W = cv.width, H = cv.height;
   const xOf = function (i) { return (i / (hist.length - 1)) * (W - 16 * dpr) + 8 * dpr; };
   const yOf = function (v) { return H - 8 * dpr - v * (H - 16 * dpr); };
-  // 基线
+  // baseline
   const base = p.mind.mood.baseline || { valence: 0.5 };
   c.strokeStyle = 'rgba(255,255,255,.08)';
   c.setLineDash([3, 4]);
   c.beginPath(); c.moveTo(0, yOf(base.valence)); c.lineTo(W, yOf(base.valence)); c.stroke();
   c.setLineDash([]);
-  // 愉悦度
+  // valence
   c.beginPath();
   hist.forEach(function (h, i) { i ? c.lineTo(xOf(i), yOf(h.v)) : c.moveTo(xOf(i), yOf(h.v)); });
   c.strokeStyle = 'rgba(56,232,255,.8)';
   c.lineWidth = 1.4 * dpr;
   c.stroke();
-  // 唤醒度
+  // arousal
   c.beginPath();
   hist.forEach(function (h, i) { i ? c.lineTo(xOf(i), yOf(h.a)) : c.moveTo(xOf(i), yOf(h.a)); });
   c.strokeStyle = 'rgba(255,95,162,.55)';
