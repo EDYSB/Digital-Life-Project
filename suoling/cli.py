@@ -138,6 +138,34 @@ def cmd_chat(args) -> None:
         lines.append("**%s**：%s\n" % (per["name"], r["text"]))
 
 
+def cmd_mode(args) -> None:
+    """gpu / pet / auto。没有 GPU 就用桌宠。"""
+    from . import config
+
+    if not args.name:
+        cfg = config.load()
+        print("")
+        print("  当前模式：%s" % (cfg.get("mode") or "auto"))
+        print("  gpu  —— 接 VoxEMW / LiveTalking 这类后端，真人级口型")
+        print("  pet  —— 没有 GPU 时的小窗桌宠，会呼吸、眨眼、说话")
+        print("  auto —— 有 voice_backend 就 gpu，否则 pet")
+        print("")
+        print("  切换：dl mode gpu | dl mode pet | dl mode auto")
+        print("")
+        return
+    name = args.name.lower()
+    if name not in ("gpu", "pet", "auto"):
+        print("  只有 gpu / pet / auto 三种。")
+        return
+    config.save({"mode": name})
+    print("  已切到 %s 模式。" % name)
+
+
+def cmd_pet(args) -> None:
+    from . import pet as pet_mod
+    pet_mod.main(1200 if args.test else None)
+
+
 def cmd_api(args) -> None:
     """看或设置 API key：dl api sk-xxx / dl api --clear / dl api"""
     from . import config
@@ -385,6 +413,14 @@ def main(argv: list[str] | None = None) -> None:
     st = sub.add_parser("stats", help="后台：查看全部参数（前台不显示）")
     st.add_argument("--id", default="")
     st.set_defaults(func=cmd_stats)
+
+    md = sub.add_parser("mode", help="gpu / pet / auto")
+    md.add_argument("name", nargs="?", default="")
+    md.set_defaults(func=cmd_mode)
+
+    pe = sub.add_parser("pet", help="桌宠模式（无 GPU）")
+    pe.add_argument("--test", action="store_true", help="1.2 秒后自动关闭")
+    pe.set_defaults(func=cmd_pet)
 
     ap_ = sub.add_parser("api", help="看或设置 DeepSeek API key")
     ap_.add_argument("key", nargs="?", default="")

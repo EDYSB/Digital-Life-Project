@@ -11,6 +11,7 @@ _DEFAULT = {
     "deepseek_model": "deepseek-chat",
     "voice_backend": "",
     "voice_ws": "",
+    "mode": "auto",
 }
 
 
