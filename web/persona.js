@@ -18,6 +18,8 @@ class PersonaAvatar {
       s: 0.01 + Math.random() * 0.04, p: Math.random() * Math.PI * 2,
     }));
     this.alive = true;
+    this.art = new Image();
+    this.art.src = '/assets/whale-girl.png';
     this.resize();
     this._loop = this._loop.bind(this);
     this.raf = requestAnimationFrame(this._loop);
@@ -123,6 +125,16 @@ class PersonaAvatar {
     c.restore();
 
     const breathe = 1 + Math.sin(this.t * 1.2) * 0.008 + this.pulseV * 0.012;
+
+    /* 有立绘就用立绘（呼吸 + 轻微浮动），没有就画代码版 */
+    if (this.art && this.art.complete && this.art.naturalWidth) {
+      const ih = h * 0.94 * breathe;
+      const iw = ih * (this.art.naturalWidth / this.art.naturalHeight);
+      const ax = (w - iw) / 2;
+      const ay = h - ih + Math.sin(this.t * 1.1) * 2;
+      c.drawImage(this.art, ax, ay, iw, ih);
+      return;
+    }
     const cx = w * 0.5;
     const headY = h * 0.40 + (this.speaking ? Math.sin(this.t * 6) * 1.5 : 0);
     const headR = Math.min(w * 0.30, h * 0.26);   // 大头，Q 版比例
