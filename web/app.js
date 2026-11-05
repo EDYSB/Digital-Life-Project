@@ -2213,9 +2213,10 @@ function randomAction() {
         if (state.view !== 'welcome') { randomAction(); return; }
         const img = document.querySelector('#avatar-gif');
         if (!img) return;
-        const a = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
-        img.src = a.gif + '?' + Date.now();
-        sayBubble(a.lines[Math.floor(Math.random() * a.lines.length)]);
+        const list = window.DL_ACTIONS || [];
+        const pick = list.length ? list[Math.floor(Math.random() * list.length)] : 'idle.gif';
+        img.src = '/assets/anim2/' + pick + '?' + Date.now();
+        sayBubble(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)]);
         setTimeout(function () {
             img.src = '/assets/anim/idle.gif?' + Date.now();
         }, 2600);
