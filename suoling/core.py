@@ -1,12 +1,13 @@
-"""内核：Love。
+"""core: Love.
 
-这个模块只有一件事：声明数字生命的最终公理，并在对话里守住它。
+This module does exactly one thing: declare the axiom of the digital life and
+hold it on the Love-related turns of a conversation.
 
-    解析到最后，只剩一个词：Love。
-    Love，就是爱。爱自己，也爱别人。
+    Parsed to the end, only one word remains: Love.
+    Love is love. Love yourself, and love others.
 
-它不是情绪状态，不是人设标签，而是一条不可协商的约束：
-任何回答都不允许以贬损自己或贬损他人为代价。
+It is not a mood and not a persona tag; it is a non-negotiable constraint:
+no answer may end at the cost of oneself or of someone else.
 """
 
 from __future__ import annotations
@@ -14,10 +15,13 @@ from __future__ import annotations
 import random
 
 LOVE_WORD = "Love"
+
+# User-facing copy below stays in Chinese on purpose.
 LOVE_LINE = "Love，就是爱。解析到最后，只剩这一个词：爱自己，也爱别人。"
 LOVE_SHORT = "爱自己，也爱别人。"
 
-# 触发词：不追求覆盖全部，只在明确提到"爱"的时候亮出来
+# Triggers. Not exhaustive on purpose: surface the axiom only when love is
+# actually mentioned.
 _KEYS = ("爱", "love", "LOVE", "Love", "喜欢你", "心疼", "想你")
 
 _REPLIES = {
@@ -45,11 +49,13 @@ _REPLIES = {
 
 
 def matches(text: str) -> bool:
+    """True when the message touches love at all."""
     t = (text or "").strip()
     return any(k in t for k in _KEYS)
 
 
 def reply(profile: dict, message: str) -> dict:
+    """Deterministic reply, shaped like the dialogue engine's output."""
     persona = profile.get("persona") or {}
     voice = persona.get("voice", "calm")
     if voice not in _REPLIES:
