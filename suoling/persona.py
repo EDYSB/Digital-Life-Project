@@ -1,4 +1,5 @@
-"""把 EEG 特征与基因倾向合成为一份"数字生命"档案（人格 + 语言 + 记忆）。
+"""Synthesise an EEG/DNA fingerprint into a digital-life dossier (persona,
+voice, memory).
 
 注意：这里没有任何"读取意识"的技术。合成的是可解释的投影：
   信号 → 7 个维度 → 一个人格原型 → 一套说话方式与记忆碎片。
@@ -12,7 +13,8 @@ import random
 from .analysis import TRAIT_ZH, TRAITS
 from . import signal as sig
 
-# 原型：key, 名称, 标题前缀, 主导维度, 名字池, 声音倾向, 一句话气质
+# Archetypes: key, name, title prefix, dominant traits, name pool,
+# voice tendency, one-line temperament.
 ARCHETYPES = [
     ("tide", "观潮者", "静水之下", {"empathy": 0.9, "stability": 0.75, "order": 0.35},
      ["沈知微", "陆听澜", "顾行舟", "白露"], "calm", "像退潮后留在沙上的水痕，安静但记得每一次浪。"),
@@ -132,7 +134,8 @@ def _trait_vector(traits: dict[str, float]) -> dict[str, float]:
 
 
 def pick_archetype(traits: dict[str, float], amp: dict[str, float] | None = None) -> tuple[tuple, float]:
-    """按"相对形状"匹配原型：先用各维度相对均值的偏移，避免全局偏高的人永远被分到少数原型。"""
+    """Match an archetype by relative shape: offset each trait against the
+    profile mean so globally high scorers do not always land on the same one."""
     if amp:
         base = sum(traits.get(t, 0.5) for t in TRAITS) / len(TRAITS)
         rel = {t: (amp.get(t, traits.get(t, 0.5)) - base) * 1.2 + 0.5 for t in TRAITS}
@@ -146,7 +149,7 @@ def pick_archetype(traits: dict[str, float], amp: dict[str, float] | None = None
         score = 0.0
         for t, w in want.items():
             score += w * (vec.get(t, 0.5) - 0.35)
-        # 惩罚明显不符的主导项
+        # Penalise dominant traits that clearly do not fit.
         for t in TRAITS:
             if t not in want:
                 score -= 0.08 * max(0.0, vec.get(t, 0.5) - 0.7)
@@ -171,7 +174,8 @@ def build_persona(
     subject: str = "",
     amplitude: dict[str, float] | None = None,
 ) -> dict:
-    """数字生命的运行档案：只描述构成与状态，不做人格文学化命名。"""
+    """Runtime dossier for a digital life: composition and state only, no
+    literary persona naming."""
     vec = _trait_vector(traits)
     code = "DL-" + pid.replace("mind_", "")[-6:].upper()
     name = (subject or "").strip() or code
@@ -179,7 +183,7 @@ def build_persona(
     insights = dna_analysis.get("insights") or []
     face_views = len((signal_summary.get("face_views") or []))
     markers = dna_analysis.get("coverage", {}).get("markers_hit", 0)
-    # 前台只说人话；参数一律留给后台（dl stats / 后台页）
+    # Front end speaks plainly; parameters live in the backend (dl stats).
     facts = [
         "我记得刚开始的时候，只有 %.1f 秒。短得像一次呼吸。" % signal_summary.get("seconds", 0),
     ]
@@ -246,7 +250,7 @@ def build_persona_legacy(
     top1, top2, top3 = ordered[0], ordered[1], ordered[2]
     low = ordered[-1]
 
-    # 自我描述
+    # Self description.
     opener = rng.choice(OPENERS[top1])
     bridge = BRIDGES[top2] if top2 != top1 else BRIDGES[top3]
     closer = IMAGE_CLOSERS[top3]
