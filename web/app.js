@@ -2187,7 +2187,24 @@ function setWelcomeMode(mode) {
   try { localStorage.setItem('dl_welcome_mode', mode); } catch (e) { }
 }
 
+function startAvatarGif() {
+  const img = document.querySelector('#avatar-gif');
+  const cv = document.querySelector('#persona-canvas');
+  if (!img) return;
+  img.src = '/assets/anim/idle.gif';
+  img.classList.add('on');
+  if (cv) cv.style.display = 'none';
+  img.onclick = function () {
+    img.src = '/assets/anim/happy.gif?' + Date.now();
+    clearTimeout(startAvatarGif._t);
+    startAvatarGif._t = setTimeout(function () {
+      img.src = '/assets/anim/idle.gif?' + Date.now();
+    }, 2200);
+  };
+}
+
 function wireWelcome() {
+  startAvatarGif();
   const host = document.querySelector('#avatar-host');
   if (host) host.addEventListener('click', showMeme);
   const input = $('#persona-input');
