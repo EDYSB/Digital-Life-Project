@@ -794,3 +794,5 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 .admin-chart, .fade-chart, canvas{image-rendering:auto}
 /* 折叠标题 */
 .admin-grid h3, .view h3{letter-spacing:.04em}
+
+.site-credit{padding:40px 20px 26px;text-align:center;font-size:10.5px;letter-spacing:.04em;color:#a9b7c0}
