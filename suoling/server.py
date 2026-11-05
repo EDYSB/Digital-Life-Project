@@ -213,6 +213,18 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/sample/"):
                 name = urllib.parse.unquote(path.rsplit("/", 1)[-1])
                 return self._serve_file(os.path.join(SAMPLE_DIR, os.path.basename(name)), download=name)
+            if path == "/api/brain":
+                qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                mid = (qs.get("id") or [""])[0]
+                prof = _get(mid) if mid else None
+                if prof is None:
+                    items = pipeline.list_minds()
+                    prof = _get(items[0]["id"]) if items else None
+                if prof is None:
+                    return self._send_error(HTTPStatus.NOT_FOUND, "还没有档案。")
+                from . import brain as brain_mod
+
+                return self._send_json(brain_mod.snapshot(prof))
             return self._serve_static(path)
         except BrokenPipeError:
             return

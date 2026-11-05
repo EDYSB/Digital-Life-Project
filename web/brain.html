@@ -54,8 +54,8 @@ function step() {
   for (let i = 0; i < act.length; i++) {
     act[i] = Math.max(0.03, act[i] * 0.9 + Math.random() * 0.02);
   }
-  // 随机有一次区域被点亮
-  if (Math.random() < 0.55) {
+  // 随机有一次区域被点亮（只有连不上后端时才自己演）
+  if (!remoteOk && Math.random() < 0.55) {
     const i = Math.floor(Math.random() * act.length);
     act[i] = Math.min(1, act[i] + 0.35 + Math.random() * 0.3);
     topIdx = i;
@@ -69,7 +69,29 @@ function step() {
   renderBars();
 }
 
-let sayTimer = null;
+let remoteOk = false, lastShown = '', sayTimer = null;
+
+async function poll() {
+  try {
+    const r = await fetch('/api/brain', { cache: 'no-store' });
+    if (!r.ok) throw new Error('no');
+    const d = await r.json();
+    const map = {};
+    (d.regions || []).forEach(function (row) { map[row[0]] = row[1]; });
+    REGIONS.forEach(function (reg, i) { if (map[reg.name] != null) act[i] = map[reg.name]; });
+    ticks = d.ticks;
+    remoteOk = true;
+    renderBars();
+    if (d.last && d.last !== lastShown) {
+      lastShown = d.last;
+      say(VOICES[d.last][Math.floor(Math.random() * 3)]);
+    }
+  } catch (e) {
+    remoteOk = false;
+  }
+}
+setInterval(poll, 1500);
+poll();
 function say(text) {
   const el = document.getElementById('thought');
   el.textContent = text;
