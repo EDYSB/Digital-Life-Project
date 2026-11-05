@@ -2200,24 +2200,53 @@ function randomAction() {
         img.src = '/assets/anim2/' + pick + '?' + Date.now();
         sayBubble(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)]);
         setTimeout(function () {
-            img.src = '/assets/anim/idle.gif?' + Date.now();
+            setAvatar('/assets/anim/idle.gif??' + Date.now());
         }, 2600);
         randomAction();
     }, 12000 + Math.random() * 12000);
+}
+
+let avatarFallback = 0;
+
+/* 只有确认加载成功才换图，失败就保留当前帧——不会出现裂图占位 */
+const _avatarCache = {};
+function setAvatar(src) {
+  const img = document.querySelector('#avatar-gif');
+  if (!img || !src) return;
+  const key = src.split('?')[0];
+  if (_avatarCache[key]) { img.src = src; return; }
+  const probe = new Image();
+  probe.onload = function () { _avatarCache[key] = true; img.src = src; };
+  probe.onerror = function () { /* keep the previous frame */ };
+  probe.src = src;
 }
 
 function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
   if (!img) return;
-  img.src = '/assets/anim/idle.gif';
+  // 加载失败时依次回退：当前动作 → 静态立绘 → 画布版本，避免出现裂图
+  img.onerror = function () {
+    avatarFallback += 1;
+    if (avatarFallback === 1) {
+      setAvatar('/assets/df-idle.png');
+    } else if (avatarFallback === 2) {
+      img.classList.remove('on');
+      if (cv) cv.style.display = '';
+      if (window.PersonaAvatar && !welcomePersona) {
+        welcomePersona = new PersonaAvatar(cv, { color: '#4fe3ff' });
+      }
+    }
+  };
+  avatarFallback = 0;
+  setAvatar('/assets/anim/idle.gif');
   img.classList.add('on');
   if (cv) cv.style.display = 'none';
   img.onclick = function () {
-    img.src = '/assets/anim/happy.gif?' + Date.now();
+    setAvatar('/assets/anim/happy.gif??' + Date.now());
     clearTimeout(startAvatarGif._t);
     startAvatarGif._t = setTimeout(function () {
-      img.src = '/assets/anim/idle.gif?' + Date.now();
+      setAvatar('/assets/anim/idle.gif??' + Date.now());
     }, 2200);
   };
 }
@@ -2293,7 +2322,7 @@ async function homeSend(text) {
         log.scrollTop = log.scrollHeight;
     };
     const av = document.querySelector('#avatar-gif');
-    if (av) av.src = '/assets/anim/think.gif?' + Date.now();
+    if (av) setAvatar('/assets/anim/think.gif??' + Date.now());
     add('me', text);
     const THINKING = ['嗯……', '我想一下。', '这个得慢慢说。', '……让我想想。', '你等我一下。'];
     const t0 = Date.now();
@@ -2308,8 +2337,8 @@ async function homeSend(text) {
             { role: 'user', text: text }, { role: 'assistant', text: reply },
         ]).slice(-12);
         const av2 = document.querySelector('#avatar-gif');
-        if (av2) av2.src = '/assets/anim/happy.gif?' + Date.now();
-        setTimeout(function () { const av3 = document.querySelector('#avatar-gif'); if (av3) av3.src = '/assets/anim/idle.gif?' + Date.now(); }, 2600);
+        if (av2) setAvatar('/assets/anim/happy.gif??' + Date.now());
+        setTimeout(function () { const av3 = document.querySelector('#avatar-gif'); if (av3) setAvatar('/assets/anim/idle.gif??' + Date.now()); }, 2600);
         if (welcomePersona) { welcomePersona.speak(); }
         try { speakText(reply); } catch (e) { }
         setTimeout(function () { if (welcomePersona) welcomePersona.stopSpeaking(); }, 900 + reply.length * 180);

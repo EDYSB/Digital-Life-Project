@@ -796,7 +796,7 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 .admin-grid h3, .view h3{letter-spacing:.04em}
 
 
-.avatar-host{width:300px;height:240px;position:relative;border-radius:10px;overflow:hidden}
+.avatar-host{width:440px;height:248px;position:relative;border-radius:10px;overflow:hidden}
 .avatar-host canvas{width:100%;height:100%;display:block}
 
 /* 后台 v2 */
@@ -828,7 +828,7 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
   box-shadow:0 18px 50px rgba(10,18,26,.28)}
 .meme-pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
-.avatar-gif{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;display:none;image-rendering:auto}
+.avatar-gif{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;display:none;image-rendering:pixelated;image-rendering:auto}
 .avatar-gif.on{display:block}
 
 .bub.pc{background:#f2f7fa;color:#4a5b66;font-style:italic}
