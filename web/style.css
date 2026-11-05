@@ -855,7 +855,7 @@ body:not(.dev) .step[data-step="0"],body:not(.dev) .step[data-step="1"],body:not
 /* An <img> with an empty src renders a broken-image glyph; hide it. */
 img[src=""], img:not([src]){display:none!important}
 
-.life-bar{position:fixed;top:118px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+.life-bar{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
   font-size:11.5px;color:#7b8f9a;letter-spacing:.04em;margin:0 auto 8px;opacity:0;
   transition:opacity .3s}
 .life-bar.on{opacity:1}

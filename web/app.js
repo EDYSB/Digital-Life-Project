@@ -2722,3 +2722,21 @@ function glyphGuard(root) {
 glyphGuard();
 window.addEventListener('load', function () { glyphGuard(); });
 setInterval(function () { glyphGuard(); }, 4000);
+
+
+/* Keep the bar just under whatever header the current layout uses. */
+function placeLifeBar() {
+  const bar = document.querySelector('#life-bar');
+  if (!bar) return;
+  const head = document.querySelector('header, .topbar, .site-head, nav');
+  let top = 72;
+  if (head) {
+    const r = head.getBoundingClientRect();
+    if (r.height > 0) top = Math.round(r.bottom) + 8;
+  }
+  bar.style.top = top + 'px';
+}
+placeLifeBar();
+window.addEventListener('resize', placeLifeBar);
+window.addEventListener('load', placeLifeBar);
+setInterval(placeLifeBar, 3000);
