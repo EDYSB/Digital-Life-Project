@@ -2700,43 +2700,35 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', lifeBarBoot);
 
 
-/* glyphGuard: an <img> that fails to load shows a broken-image placeholder.
-   Hide it instead, and bring it back only if it later loads something real. */
+/* glyphGuard: an <img> that fails to load draws the browser's broken-image
+   placeholder. Replace the source with a transparent 1x1 pixel so the box can
+   never render that glyph, wherever the image came from. */
+const BLANK_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+function killBrokenImg(img) {
+  if (!img || img.dataset.blank === '1') return;
+  img.dataset.blank = '1';
+  img.style.visibility = 'hidden';
+  img.src = BLANK_PIXEL;
+}
+
 function glyphGuard(root) {
   const imgs = (root || document).querySelectorAll('img');
   imgs.forEach(function (img) {
-    if (img.dataset.guarded) return;
-    img.dataset.guarded = '1';
-    img.addEventListener('error', function () {
-      console.warn('[img-failed]', img.id || '(no id)', img.className, img.getAttribute('src'));
-      img.style.display = 'none';
-    });
-    img.addEventListener('load', function () {
-      if (img.naturalWidth > 0) img.style.removeProperty('display');
-    });
-    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
-      img.style.display = 'none';
+    if (!img.dataset.guarded) {
+      img.dataset.guarded = '1';
+      img.addEventListener('error', function () {
+        console.warn('[img-failed]', img.id || '(no id)', img.className, img.getAttribute('src'));
+        killBrokenImg(img);
+      });
     }
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) killBrokenImg(img);
   });
 }
+
 glyphGuard();
 window.addEventListener('load', function () { glyphGuard(); });
-setInterval(function () { glyphGuard(); }, 4000);
-
-
-/* Keep the bar just under whatever header the current layout uses. */
-function placeLifeBar() {
-  const bar = document.querySelector('#life-bar');
-  if (!bar) return;
-  const head = document.querySelector('header, .topbar, .site-head, nav');
-  let top = 72;
-  if (head) {
-    const r = head.getBoundingClientRect();
-    if (r.height > 0) top = Math.round(r.bottom) + 8;
-  }
-  bar.style.top = top + 'px';
-}
-placeLifeBar();
-window.addEventListener('resize', placeLifeBar);
-window.addEventListener('load', placeLifeBar);
-setInterval(placeLifeBar, 3000);
+document.addEventListener('error', function (e) {
+  if (e.target && e.target.tagName === 'IMG') killBrokenImg(e.target);
+}, true);
+setInterval(function () { glyphGuard(); }, 2000);
