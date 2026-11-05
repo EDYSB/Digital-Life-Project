@@ -1,4 +1,4 @@
-"""core: Love.
+"""core: Love. Axiom is intentionally silent in chat; see dl final.
 
 This module does exactly one thing: declare the axiom of the digital life and
 hold it on the Love-related turns of a conversation.

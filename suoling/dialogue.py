@@ -379,8 +379,9 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
             "world": world,
             "disclaimer": "算力不足时的自我保护状态，不是意识。",
         }
-    if core_mod.matches(message):
-        return core_mod.reply(profile, message)
+    # The Love axiom is not spoken in ordinary conversation. It is the one line
+    # reserved for `dl final`; here it only shapes how "love" is answered.
+    # (core_mod.matches / core_mod.reply stay available, unused by design.)
     try:
         from . import llm as llm_mod
         hit = llm_mod.reply(profile, message, recalled, mood, world)
