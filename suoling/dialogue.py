@@ -1,4 +1,4 @@
-"""对话引擎：确定性、可解释、有边界的角色对话。
+"""Dialogue engine: deterministic, explainable, bounded character talk.
 
 不是语言模型。整段对话由规则 + 模板 + 人格参数拼成：
   - 意图识别：关键词 + 否定/疑问标记；
@@ -248,7 +248,7 @@ FOLLOWUPS = {
     "greeting": ["今天发生了什么？", "你想从哪件事说起？"],
 }
 
-# (唤醒度, 愉悦度) -> 标签
+# (arousal, valence) -> label
 EMOTION_LABEL = {
     (0.78, 0.75): "明亮 · 上扬",
     (0.55, 0.78): "温和 · 靠近",
@@ -270,7 +270,7 @@ def classify(text: str) -> str:
         for w in words:
             if w in t:
                 score += 4 if len(w) >= 3 else 2 if len(w) >= 2 else 1
-        # 疑问句 + 关键词加权
+        # Question marks plus keyword weighting.
         if score and ("?" in t or "？" in t or "吗" in t or "呢" in t):
             score += 1
         if score > best[1]:
@@ -292,7 +292,8 @@ def _tone(profile: dict, rng: random.Random, intent: str) -> str | None:
     traits = {t["key"]: t["value"] for t in profile.get("traits", [])}
     if not traits:
         return None
-    # 只在与情绪/关系/意义类话题时加一句"人格味"的补语
+    # Add a persona-flavoured afterthought only on emotion / relationship /
+    # meaning topics.
     if intent in ("greeting", "thanks", "bye", "fallback", "empty"):
         hot = [k for k, v in traits.items() if v >= 0.72]
         if not hot:
@@ -309,7 +310,8 @@ def emotion_state(profile: dict, history: list[dict], message: str = "") -> dict
     traits = {t["key"]: t["value"] for t in profile.get("traits", [])}
     arousal = 0.22 + 0.42 * traits.get("alertness", 0.5) + 0.14 * traits.get("curiosity", 0.5)
     valence = 0.30 + 0.38 * traits.get("empathy", 0.5) + 0.24 * traits.get("stability", 0.5)
-    # 对话漂移：负面词降 valence，问号/感叹号升 arousal
+    # Drift: negative words lower valence; question and exclamation marks
+    # raise arousal.
     history = list(history[-8:]) + ([{"text": message}] if message else [])
     for h in history:
         t = h.get("text", "")
@@ -411,7 +413,8 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
     else:
         text = _pick(rng, FALLBACKS[voice], state)
 
-    # 记忆：优先回应"你还记得吗"，其次在合适的话题里自然带出
+    # Memory: answer "do you remember" first, otherwise bring it up only
+    # when the topic fits.
     mem_used = None
     if intent == "memory" or (recalled and rng.random() < 0.42):
         if recalled:
@@ -434,7 +437,7 @@ def reply(profile: dict, message: str, history: list[dict] | None = None,
     else:
         emotion = emotion_state(profile, history, message)
     followups = FOLLOWUPS.get(intent, [])
-    # 只在回答较短时给主动追问，避免话痨
+    # Follow up only when the answer is short; avoid chattering.
     nxt = rng.choice(followups) if followups and rng.random() < 0.45 else ""
 
     return {
@@ -474,7 +477,8 @@ def opening(profile: dict) -> dict:
 
 
 def demo_exchange(profile: dict) -> list[dict]:
-    """档案页的"快速对话样本"，让用户在正式聊天前先听到它的声音。"""
+    """Short sample exchanges for the dossier page, so the voice is audible
+    before the first real chat."""
     qs = ["你是谁？", "你是怎么来的？", "你还记得我什么？", "你觉得自己是真的吗？"]
     out = []
     for i, q in enumerate(qs):
@@ -484,14 +488,16 @@ def demo_exchange(profile: dict) -> list[dict]:
 
 
 def sonify(profile: dict) -> dict:
-    """把档案变成一段可播放的"心灵音景"参数（由前端 Web Audio 合成）。"""
+    """Turn the dossier into parameters for a playable soundscape (rendered
+    by the front-end Web Audio)."""
     traits = {t["key"]: t["value"] for t in profile.get("traits", [])}
     bands = profile.get("eeg", {}).get("bands", {})
-    # 基频：alpha 峰频映射到 110~220 Hz
+    # Base frequency: alpha peak mapped into 110-220 Hz.
     peak = profile.get("eeg", {}).get("peak_hz", 10.0)
     root = 110.0 * (2 ** ((peak - 10.0) / 12.0))
     root = max(82.0, min(330.0, root))
-    # 和弦：定力→小三度，共情→纯五度，创造→大七度
+    # Chord: stability -> minor third, empathy -> perfect fifth,
+    # creativity -> major seventh.
     intervals = [1.0]
     if traits.get("empathy", 0.5) > 0.45:
         intervals.append(1.5)
@@ -502,7 +508,7 @@ def sonify(profile: dict) -> dict:
     if traits.get("curiosity", 0.5) > 0.6:
         intervals.append(2.0)
     notes = [round(root * i, 2) for i in intervals]
-    # 每个频带一条微弱的持续音
+    # One faint sustained tone per frequency band.
     band_tones = []
     for key, color in (("delta", "#6b5bd2"), ("theta", "#9b6bff"), ("alpha", "#38e8ff"),
                        ("beta", "#ffb057"), ("gamma", "#ff5fa2")):
