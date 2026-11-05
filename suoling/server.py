@@ -512,6 +512,11 @@ class Handler(BaseHTTPRequestHandler):
         memory.decay(profile)
         ctx = memory.recall_context(profile, message)
         world_state = world.evaluate(profile)
+        try:
+            from . import brain as brain_mod
+            thought = brain_mod.pulse(profile, message, recall=bool(ctx.get("recalled")))
+        except Exception:
+            thought = ""
         result = None
         if world_state.get("state") != "protective" and llm.enabled():
             text = llm.reply(profile, message, ctx.get("recalled", []), ctx.get("mood", {}), world_state)

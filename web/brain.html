@@ -4,21 +4,44 @@
 <meta charset="utf-8">
 <title>大脑 · 数字生命</title>
 <style>
-  html,body{margin:0;height:100%;background:#05080c;color:#dfeef6;font-family:-apple-system,"Microsoft YaHei",sans-serif;overflow:hidden}
-  canvas{display:block}
-  .hud{position:fixed;left:28px;top:24px;font-family:Consolas,monospace;font-size:11px;letter-spacing:.18em;color:#5d7c8c}
-  .thought{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);font-size:15px;letter-spacing:.04em;color:#cfe6f2;opacity:0;transition:opacity .5s}
+  html,body{margin:0;height:100%;background:#04070b;color:#dfeef6;
+    font-family:-apple-system,"Microsoft YaHei",sans-serif;overflow:hidden}
+  canvas{display:block;cursor:pointer}
+  .hud{position:fixed;left:28px;top:22px;font-family:Consolas,monospace;font-size:10.5px;
+    letter-spacing:.2em;color:#4d6b7a}
+  .bars{position:fixed;right:28px;top:22px;font-family:Consolas,monospace;font-size:11px;line-height:2.1}
+  .bars span{color:#4d6b7a;display:inline-block;width:44px}
+  .bars b{color:#4fe3ff;font-weight:400}
+  .card{position:fixed;right:28px;bottom:110px;width:290px;padding:18px 20px;
+    background:rgba(10,18,26,.92);border:1px solid #16303f;border-radius:12px;
+    opacity:0;transform:translateY(8px);transition:opacity .22s,transform .22s;pointer-events:none}
+  .card.on{opacity:1;transform:none}
+  .card h3{margin:0 0 4px;font-size:15px;letter-spacing:.14em;font-weight:500}
+  .card .v{font-family:Consolas,monospace;font-size:30px;letter-spacing:.02em}
+  .card .sub{font-size:11px;color:#5d7c8c;margin:6px 0 12px;letter-spacing:.04em}
+  .card .q{font-size:12.5px;line-height:1.9;color:#a9c4d2;border-left:2px solid #1f4a5e;padding-left:10px}
+  .card .spark{display:flex;align-items:flex-end;gap:2px;height:34px;margin:12px 0 4px}
+  .card .spark i{display:block;width:4px;background:#2b6f8a;border-radius:1px}
+  .quote{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);font-size:12.5px;
+    color:#5f7d8c;letter-spacing:.06em;white-space:nowrap}
+  .thought{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);font-size:14.5px;
+    color:#cfe6f2;opacity:0;transition:opacity .5s}
   .thought.on{opacity:1}
-  .bar{position:fixed;right:28px;top:24px;font-family:Consolas,monospace;font-size:11px;line-height:2}
-  .bar span{color:#5d7c8c;display:inline-block;width:46px}
-  .bar b{color:#4fe3ff;font-weight:400}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="hud">BRAIN · 5 REGIONS · <span id="ticks">0</span> TICKS</div>
-<div class="bar" id="bars"></div>
+<div class="hud">BRAIN · 5 REGIONS · <span id="ticks">0</span> TICKS · 点击放大</div>
+<div class="bars" id="bars"></div>
 <div class="thought" id="thought"></div>
+<div class="card" id="card">
+  <h3 id="c-name">—</h3>
+  <div class="v" id="c-v">0.00</div>
+  <div class="sub" id="c-sub">—</div>
+  <div class="spark" id="c-spark"></div>
+  <div class="q" id="c-q">—</div>
+</div>
+<div class="quote">我想做的，是把她在时间里留下的痕迹，延长得再久一些。</div>
 <script>
 const REGIONS = [
   { name: '感知', color: '#5fd0ff' },
@@ -45,31 +68,24 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 
-// 与后端同构的极简模型；拿不到 /api/brain 时自己跑
 const act = REGIONS.map(() => 0.1 + Math.random() * 0.1);
-let ticks = 0, topIdx = 0, t0 = performance.now();
+const history = REGIONS.map(() => []);
+let ticks = 0, selected = -1, remoteOk = false, lastShown = '', t0 = performance.now();
+let nodes = [];
 
-function step() {
-  ticks++;
-  for (let i = 0; i < act.length; i++) {
-    act[i] = Math.max(0.03, act[i] * 0.9 + Math.random() * 0.02);
-  }
-  // 随机有一次区域被点亮（只有连不上后端时才自己演）
-  if (!remoteOk && Math.random() < 0.55) {
-    const i = Math.floor(Math.random() * act.length);
-    act[i] = Math.min(1, act[i] + 0.35 + Math.random() * 0.3);
-    topIdx = i;
-    say(VOICES[REGIONS[i].name][Math.floor(Math.random() * 3)]);
-  }
-  // 扩散
-  for (let i = 0; i < act.length; i++) {
-    const j = (i + 1) % act.length;
-    act[j] = Math.min(1, act[j] + act[i] * 0.15);
-  }
-  renderBars();
+function say(text) {
+  const el = document.getElementById('thought');
+  el.textContent = text;
+  el.classList.add('on');
+  clearTimeout(say._t);
+  say._t = setTimeout(() => el.classList.remove('on'), 3400);
 }
 
-let remoteOk = false, lastShown = '', sayTimer = null;
+function push(i, v) {
+  const h = history[i];
+  h.push(v);
+  if (h.length > 22) h.shift();
+}
 
 async function poll() {
   try {
@@ -78,92 +94,140 @@ async function poll() {
     const d = await r.json();
     const map = {};
     (d.regions || []).forEach(function (row) { map[row[0]] = row[1]; });
-    REGIONS.forEach(function (reg, i) { if (map[reg.name] != null) act[i] = map[reg.name]; });
+    REGIONS.forEach(function (reg, i) {
+      if (map[reg.name] != null) { act[i] = map[reg.name]; push(i, act[i]); }
+    });
     ticks = d.ticks;
     remoteOk = true;
     renderBars();
+    if (selected >= 0) renderCard();
     if (d.last && d.last !== lastShown) {
       lastShown = d.last;
       say(VOICES[d.last][Math.floor(Math.random() * 3)]);
     }
-  } catch (e) {
-    remoteOk = false;
+  } catch (e) { remoteOk = false; }
+}
+setInterval(poll, 1500); poll();
+
+function step() {
+  if (!remoteOk) {
+    ticks++;
+    for (let i = 0; i < act.length; i++) act[i] = Math.max(0.04, act[i] * 0.9 + Math.random() * 0.02);
+    if (Math.random() < 0.5) {
+      const i = Math.floor(Math.random() * act.length);
+      act[i] = Math.min(1, act[i] + 0.35);
+      say(VOICES[REGIONS[i].name][Math.floor(Math.random() * 3)]);
+    }
+    for (let i = 0; i < act.length; i++) act[(i + 1) % act.length] = Math.min(1, act[(i + 1) % act.length] + act[i] * 0.15);
   }
+  act.forEach(function (v, i) { push(i, v); });
+  renderBars();
+  if (selected >= 0) renderCard();
 }
-setInterval(poll, 1500);
-poll();
-function say(text) {
-  const el = document.getElementById('thought');
-  el.textContent = text;
-  el.classList.add('on');
-  clearTimeout(sayTimer);
-  sayTimer = setTimeout(() => el.classList.remove('on'), 3400);
-}
+setInterval(step, 900);
 
 function renderBars() {
-  const box = document.getElementById('bars');
-  box.innerHTML = REGIONS.map((r, i) =>
-    `<div><span>${r.name}</span><b>${act[i].toFixed(2)}</b></div>`).join('');
+  document.getElementById('bars').innerHTML = REGIONS.map(function (r, i) {
+    return '<div><span>' + r.name + '</span><b>' + act[i].toFixed(2) + '</b></div>';
+  }).join('');
   document.getElementById('ticks').textContent = ticks;
+}
+
+function renderCard() {
+  const i = selected;
+  const card = document.getElementById('card');
+  if (i < 0) { card.classList.remove('on'); return; }
+  card.classList.add('on');
+  document.getElementById('c-name').textContent = REGIONS[i].name;
+  document.getElementById('c-v').textContent = act[i].toFixed(2);
+  const h = history[i];
+  const avg = h.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, h.length);
+  document.getElementById('c-sub').textContent =
+    '近 ' + h.length + ' 拍均值 ' + avg.toFixed(2) + ' · 峰值 ' + Math.max.apply(null, h.concat([0])).toFixed(2);
+  document.getElementById('c-spark').innerHTML = h.map(function (v) {
+    return '<i style="height:' + Math.max(3, v * 34) + 'px;opacity:' + (0.35 + v * 0.65) + '"></i>';
+  }).join('');
+  document.getElementById('c-q').textContent = VOICES[REGIONS[i].name][0];
+}
+
+function layout() {
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) * (selected >= 0 ? 0.19 : 0.24);
+  return REGIONS.map(function (r, i) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / REGIONS.length;
+    let rr = R;
+    if (selected >= 0) rr = (i === selected) ? R * 1.05 : R * 0.55;
+    return { x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, i: i };
+  });
 }
 
 function draw(t) {
   const time = (t - t0) / 1000;
-  ctx.fillStyle = '#05080c';
+  ctx.fillStyle = '#04070b';
   ctx.fillRect(0, 0, W, H);
 
-  const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.24;
-  const pts = REGIONS.map((r, i) => {
-    const a = -Math.PI / 2 + i * Math.PI * 2 / REGIONS.length;
-    return { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, r, i };
-  });
+  nodes = layout();
+  const cx = W / 2, cy = H / 2;
 
-  // 连线：亮度跟着两端激活
-  ctx.lineWidth = 1;
-  for (let i = 0; i < pts.length; i++) {
-    for (let j = i + 1; j < pts.length; j++) {
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dim = selected >= 0 && i !== selected && j !== selected;
       const w = Math.min(act[i], act[j]);
-      ctx.strokeStyle = `rgba(120,200,255,${0.05 + w * 0.35})`;
-      ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+      ctx.strokeStyle = 'rgba(120,200,255,' + ((dim ? 0.03 : 0.06) + w * (dim ? 0.1 : 0.32)) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
     }
   }
 
-  // 节点
-  pts.forEach(p => {
-    const v = act[p.i];
-    const pulse = 0.7 + 0.3 * Math.sin(time * 2 + p.i);
-    const rad = 10 + v * 26 * pulse;
-    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 3);
-    g.addColorStop(0, p.r.color + 'cc');
-    g.addColorStop(0.35, p.r.color + '33');
-    g.addColorStop(1, p.r.color + '00');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(p.x, p.y, rad * 3, 0, 7); ctx.fill();
-
-    ctx.fillStyle = p.r.color;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 4 + v * 4, 0, 7); ctx.fill();
-
-    ctx.fillStyle = 'rgba(220,240,250,.85)';
-    ctx.font = '12px "Microsoft YaHei"';
-    ctx.textAlign = 'center';
-    ctx.fillText(p.r.name, p.x, p.y + rad + 22);
-  });
-
-  // 中心：当前最亮的区域
-  const best = act.indexOf(Math.max(...act));
-  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 90);
-  cg.addColorStop(0, REGIONS[best].color + '55');
+  const best = selected >= 0 ? selected : act.indexOf(Math.max.apply(null, act));
+  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+  cg.addColorStop(0, REGIONS[best].color + '44');
   cg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = cg;
-  ctx.beginPath(); ctx.arc(cx, cy, 90, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 120, 0, 7); ctx.fill();
+
+  nodes.forEach(function (p) {
+    const v = act[p.i];
+    const isSel = selected === p.i;
+    const dim = selected >= 0 && !isSel;
+    const pulse = 0.75 + 0.25 * Math.sin(time * 2 + p.i);
+    const rad = (isSel ? 16 : 9) + v * (isSel ? 34 : 22) * pulse;
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 3.2);
+    g.addColorStop(0, REGIONS[p.i].color + (dim ? '55' : 'cc'));
+    g.addColorStop(0.35, REGIONS[p.i].color + (dim ? '12' : '33'));
+    g.addColorStop(1, REGIONS[p.i].color + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(p.x, p.y, rad * 3.2, 0, 7); ctx.fill();
+
+    ctx.fillStyle = REGIONS[p.i].color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, (isSel ? 6 : 4) + v * 4, 0, 7); ctx.fill();
+
+    ctx.fillStyle = isSel ? '#ffffff' : 'rgba(210,235,245,.75)';
+    ctx.font = (isSel ? '600 13px' : '12px') + ' "Microsoft YaHei"';
+    ctx.textAlign = 'center';
+    ctx.fillText(REGIONS[p.i].name, p.x, p.y + rad + 24);
+    if (isSel) {
+      ctx.fillStyle = 'rgba(160,200,215,.7)';
+      ctx.font = '11px Consolas,monospace';
+      ctx.fillText(v.toFixed(2), p.x, p.y + rad + 42);
+    }
+  });
 
   requestAnimationFrame(draw);
 }
-
-setInterval(step, 900);
-step();
-renderBars();
 requestAnimationFrame(draw);
+
+cv.addEventListener('click', function (e) {
+  let hit = -1;
+  nodes.forEach(function (n) {
+    if (Math.hypot(n.x - e.clientX, n.y - e.clientY) < 70) hit = n.i;
+  });
+  selected = (hit === selected) ? -1 : hit;
+  renderCard();
+});
+addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') { selected = -1; renderCard(); }
+});
 </script>
 </body>
 </html>
