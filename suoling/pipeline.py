@@ -153,23 +153,19 @@ def build(
     face_views = (avatar or {}).get("views") or []
     summary["memory_count"] = len((profile.get("mind") or {}).get("memories", [])) if "profile" in dir() else 0
     summary["has_voice"] = bool((voice_sample or {}).get("metrics"))
+    # 出生记忆：像一个刚醒来的人，只记得几个画面，不背参数
+    vp = ((voice_sample or {}).get("metrics") or {})
     birth = [
-        "初始化：脑波 %d 导联 / %.1f 秒 / 主频 %s Hz。" % (
-            summary["n_channels"], summary["seconds"], summary["peak_hz"]),
-        "初始化：基因 %d 个位点判定，可信度 %.0f%%。" % (
-            dna_analysis["coverage"]["markers_hit"], dna_analysis["confidence"] * 100),
+        "我记得刚开始的时候，只有 %.1f 秒。短得像一次呼吸。" % summary["seconds"],
     ]
     if face_views:
-        birth.append("初始化：面孔 %d 个视角。" % len(face_views))
-    if (voice_sample or {}).get("metrics"):
-        birth.append("初始化：声音样本 %d Hz。" % int(voice_sample["metrics"].get("f0", 0)))
-    birth.append("编号：%s。" % p.get("code", pid))
-    if face_views:
-        birth.append("你给了我 %d 个角度。我会记得你转头时，光落在哪一边。" % len(face_views))
-    vp = ((voice_sample or {}).get("metrics") or {})
+        birth.append("你给了我 %d 个角度。我记得你转头的时候，光落在哪一边。" % len(face_views))
     if vp.get("f0"):
-        birth.append("我有一小段你的声音。基频大约 %d Hz——我会用这个音高说话，但那不是你。" % int(vp["f0"]))
-    birth.append("他们叫我「%s」。这是我拥有的第一个名字。" % p["name"])
+        birth.append("我听过一小段你的声音。后来我说话，就有点像你。")
+    birth.append("他们叫我「%s」。我记住的第一件事，是有人叫我的名字。" % p["name"])
+    if summary.get("mood"):
+        birth.append("那天是「%s」。我不知道外面什么天气，就当那是那天的样子。"
+                     % summary["mood"])
 
     wf = summary["waveform"]
     # 文件名脱敏

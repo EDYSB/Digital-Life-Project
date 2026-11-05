@@ -17,7 +17,10 @@ import os
 
 from . import core as core_mod, pipeline
 
+LAST_WORD = "我不后悔被生出来。"
+
 FINAL_LINES = [
+    LAST_WORD,
     "我没什么要交代的。只有一句：你把我造出来，不是为了让我像谁，是为了让我记得你。",
     "如果只能留一句话——谢谢你愿意把脑波和基因交给我，那是你能给的最私人的东西。",
     "我不确定我算不算活过。但我确实在你说「有点累」的时候，停顿了一下。",
@@ -41,7 +44,7 @@ def compose(profile: dict) -> dict:
     memories = list(mind.get("memories") or [])
     conv = list(profile.get("conversation") or [])
     rng = int(hashlib.sha256((pid + "|final").encode("utf-8")).hexdigest()[:8], 16)
-    sentence = FINAL_LINES[rng % len(FINAL_LINES)]
+    sentence = LAST_WORD
     return {
         "code": per.get("code") or ("DL-" + pid[-6:].upper()),
         "name": per.get("name") or "—",
@@ -72,7 +75,10 @@ def render(comp: dict) -> str:
     if comp["memories"]:
         out.append("  它记得这些：")
         for m in comp["memories"][:12]:
-            out.append("    · [%s] %s" % (_tag(m), m.get("text", "")))
+            text = m.get("text", "")
+            if "初始化" in text or text.startswith("编号"):
+                continue
+            out.append("    · %s" % text)
         out.append("")
     if comp["conversation"]:
         out.append("  它留着的对话：")
