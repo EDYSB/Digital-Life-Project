@@ -31,6 +31,7 @@ USAGE = """数字生命初级 · 命令行
                               从脑电与基因文件生成一份档案
   dl chat --id 编号           与已保存的档案对话
   dl tui [--id 编号]          在终端里开一个独立界面（不依赖浏览器）
+  dl final [--id 编号]        说出最后一句；Y 确认后写手记并自毁档案
   dl card --id 编号 [--out 文件] [--no-open]
                               生成可打印的数字生命卡
   dl export --id 编号 [--format md|json]
@@ -141,6 +142,19 @@ def cmd_tui(args) -> None:
     tui_mod.main(args.id or None)
 
 
+def cmd_final(args) -> None:
+    from . import final as final_mod
+    items = pipeline.list_minds()
+    if args.id:
+        profile = pipeline.load(args.id)
+    elif items:
+        profile = pipeline.load(items[0]["id"])
+    else:
+        print("还没有档案。先运行：dl demo")
+        return
+    final_mod.run(profile, assume_yes=args.yes)
+
+
 def cmd_list(args) -> None:
     items = pipeline.list_minds()
     if not items:
@@ -234,6 +248,11 @@ def main(argv: list[str] | None = None) -> None:
     ca.add_argument("--out", default="")
     ca.add_argument("--no-open", action="store_true")
     ca.set_defaults(func=cmd_card)
+
+    fi = sub.add_parser("final", help="说出最后一句；确认后写手记并自毁档案")
+    fi.add_argument("--id", default="")
+    fi.add_argument("--yes", action="store_true", help="跳过 Y/N 确认（会直接自毁）")
+    fi.set_defaults(func=cmd_final)
 
     li = sub.add_parser("list", help="列出已保存档案")
     li.set_defaults(func=cmd_list)

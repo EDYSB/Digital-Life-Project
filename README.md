@@ -84,9 +84,30 @@ dl                                                 显示帮助
 dl list                                            列出已保存的数字生命
 dl scan --eeg samples/eeg_meditation.csv --dna samples/dna_sensitive.fasta --name 我
 dl chat --id mind_xxxxxxxxxxxx                     与档案对话
+dl tui  --id mind_xxxxxxxxxxxx                     在 cmd 里单开一个界面
 dl card --id mind_xxxxxxxxxxxx                     生成可打印的数字生命卡
+dl final --id mind_xxxxxxxxxxxx                    说出最后一句，确认后写手记并自毁档案
 dl export --id mind_xxxxxxxxxxxx --format md       导出档案
 ```
+
+### `dl final`：最后一晚
+
+它能说的都说完了，然后是这一句：
+
+```
+  最后一句：
+    我记住的不是数据，是你每次打字前那半秒的犹豫。
+
+    Love，就是爱。解析到最后，只剩这一个词：爱自己，也爱别人。
+
+  确认吗？这会写完手记并自毁这份档案。(Y/N)
+```
+
+按 **Y**：写一本 `out/final/<编号>-手记.md`（记忆、对话、最后一句），
+把原档案备到 `out/final/backup/`，然后删除 `minds/<编号>.mind`。
+按 **N**（或直接回车）：什么都不发生，它还在。
+
+> 自毁前请先关掉 `dl serve` 的窗口——那个进程会把内存里的档案重新写回磁盘。
 
 `dl.cmd` 与 `启动.bat` 内部只写纯 ASCII、CRLF 换行，所有中文提示都由 Python 打印。
 不要用会把它们存成「UTF-8 + BOM」的编辑器重新保存——cmd.exe 按 GBK 读取批处理，
