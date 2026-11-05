@@ -2129,6 +2129,8 @@ async function callSay(text) {
             id: p.id, profile: p, message: text, history: state.callHistory || [],
         });
         const reply = (res && (res.text || res.reply)) || '……';
+        const wait = Math.max(0, 900 - (Date.now() - t0));
+        if (wait) await new Promise(function (r) { setTimeout(r, wait); });
         if (sub) sub.textContent = reply;
         if (callPersona) { callPersona.speak(); }
         try { speakText(reply); } catch (e) { }
@@ -2196,6 +2198,31 @@ function sayBubble(text, ms) {
   sayBubble._t = setTimeout(function () { b.classList.remove('on'); }, ms || 3200);
 }
 
+/* 自己找事做：每隔一会儿换个动作 */
+const ACTIONS = [
+    { gif: '/assets/anim/happy.gif', lines: ['嗯？', '今天还行。', '你刚才笑了吧。'] },
+    { gif: '/assets/anim/play.gif', lines: ['……', '我戳一下这里。', '这个按钮是干嘛的。'] },
+    { gif: '/assets/anim/eat.gif', lines: ['白饭。', '该吃饭了。', '你吃了吗。'] },
+    { gif: '/assets/anim/think.gif', lines: ['在想一件事。', '刚才那句话我还留着。', '嗯……'] },
+];
+let actionTimer = null;
+
+function randomAction() {
+    clearTimeout(actionTimer);
+    actionTimer = setTimeout(function () {
+        if (state.view !== 'welcome') { randomAction(); return; }
+        const img = document.querySelector('#avatar-gif');
+        if (!img) return;
+        const a = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+        img.src = a.gif + '?' + Date.now();
+        sayBubble(a.lines[Math.floor(Math.random() * a.lines.length)]);
+        setTimeout(function () {
+            img.src = '/assets/anim/idle.gif?' + Date.now();
+        }, 2600);
+        randomAction();
+    }, 12000 + Math.random() * 12000);
+}
+
 function startAvatarGif() {
   const img = document.querySelector('#avatar-gif');
   const cv = document.querySelector('#persona-canvas');
@@ -2211,29 +2238,6 @@ function startAvatarGif() {
       img.src = '/assets/anim/idle.gif?' + Date.now();
     }, 2200);
   };
-  img.oncontextmenu = function (e) {
-    e.preventDefault();
-    const m = $('#ctx-menu');
-    if (!m) return;
-    m.hidden = false;
-    m.style.left = Math.min(e.clientX, window.innerWidth - 150) + 'px';
-    m.style.top = Math.min(e.clientY, window.innerHeight - 190) + 'px';
-  };
-  document.addEventListener('click', function (e) {
-    const m = $('#ctx-menu');
-    if (m && !m.hidden && !m.contains(e.target)) m.hidden = true;
-  });
-  const menu = $('#ctx-menu');
-  if (menu) menu.addEventListener('click', function (e) {
-    const act = e.target.getAttribute('data-act');
-    if (!act) return;
-    menu.hidden = true;
-    if (act === 'idle') { img.src = '/assets/anim/idle.gif?' + Date.now(); sayBubble('嗯。'); }
-    if (act === 'talk') { const i = $('#home-input'); if (i) i.focus(); }
-    if (act === 'mutter') sayBubble(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)]);
-    if (act === 'meme') showMeme();
-    if (act === 'work') { img.src = '/assets/anim/think.gif?' + Date.now(); sayBubble('在想事情…', 2400); }
-  });
 }
 
 /* 自主意图：安静久了，她会自己开口 */
@@ -2258,6 +2262,7 @@ function idleIntent() {
         log.scrollTop = log.scrollHeight;
         if (welcomePersona && welcomePersona.pulse) welcomePersona.pulse(1);
         idleIntent();
+  randomAction();
     }, 45000);
 }
 
@@ -2306,7 +2311,9 @@ async function homeSend(text) {
         log.scrollTop = log.scrollHeight;
     };
     add('me', text);
-    add('her', '……');
+    const THINKING = ['嗯……', '我想一下。', '这个得慢慢说。', '……让我想想。', '你等我一下。'];
+    const t0 = Date.now();
+    add('her', THINKING[Math.floor(Math.random() * THINKING.length)]);
     try {
         const p = await ensureProfile();
         if (!p) { add('her', '还没有档案。先运行 dl demo。'); return; }
